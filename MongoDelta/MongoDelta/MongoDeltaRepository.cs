@@ -13,7 +13,14 @@ namespace MongoDelta
         private readonly IMongoCollectionToQueryableConverter _collectionToQueryableConverter;
         private readonly IMongoQueryRunner _queryRunner;
 
-        public MongoDeltaRepository(IMongoCollection<T> collection,
+        private readonly Dictionary<T, TrackedModel<T>> _trackedModels = new Dictionary<T, TrackedModel<T>>();
+
+        public MongoDeltaRepository(IMongoCollection<T> collection) : this(collection,
+            new MongoCollectionToQueryableConverter(), new MongoQueryRunner())
+        {
+        }
+
+        internal MongoDeltaRepository(IMongoCollection<T> collection,
             IMongoCollectionToQueryableConverter collectionToQueryableConverter,
             IMongoQueryRunner queryRunner)
         {
@@ -33,6 +40,57 @@ namespace MongoDelta
             var queryable = query(_collectionToQueryableConverter.GetQueryable(_collection));
             var results = await _queryRunner.RunAsync(queryable);
             return results.SingleOrDefault();
+        }
+
+        public void Add(T model)
+        {
+            if (model == null)
+            {
+                throw new ArgumentNullException(nameof(model));
+            }
+
+            _trackedModels.Add(model, new TrackedModel<T>
+            {
+                Model = model,
+                State = TrackedModel.TrackedModelState.New
+            });
+        }
+
+        public async Task PersistChangesAsync(IClientSessionHandle existingSession = null)
+        {
+            await ExecuteWithClientSession(existingSession, async session => { await InsertNewModels(session); });
+        }
+
+        private async Task InsertNewModels(IClientSessionHandle session)
+        {
+            var newModels = _trackedModels.Values.Where(m => m.State == TrackedModel.TrackedModelState.New)
+                .Select(m => m.Model).ToArray();
+            if (newModels.Any())
+            {
+                await _collection.InsertManyAsync(session, newModels);
+            }
+        }
+
+        private async Task ExecuteWithClientSession(IClientSessionHandle session, Func<IClientSessionHandle, Task> action)
+        {
+            var closeSession = false;
+            if (session == null)
+            {
+                session = _collection.Database.Client.StartSession();
+                closeSession = true;
+            }
+
+            try
+            {
+                await action(session);
+            }
+            finally
+            {
+                if (closeSession)
+                {
+                    session.Dispose();
+                }
+            }
         }
     }
 }
