@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
+using MongoDelta.ChangeTracking;
 using MongoDelta.UnitTests.Helpers;
 using MongoDelta.UnitTests.Models;
 using NUnit.Framework;
@@ -118,6 +119,62 @@ namespace MongoDelta.UnitTests
             await persister.PersistChangesAsync(collection.Object, trackedCollection, session);
 
             collection.VerifyNoObjectsDeleted();
+            collection.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        public async Task Persist_SingleUpdated_Success()
+        {
+            var collection = MongoCollectionHelper.SetupCollectionWithSession<FlatAggregate>(out var session);
+            var trackedCollection = new TrackedModelCollection<FlatAggregate>();
+            var model = new FlatAggregate();
+            trackedCollection.Existing(model);
+            model.Name = "Jane Doe";
+
+            collection.ExpectObjectsUpdated(model);
+
+            var persister = new TrackedModelPersister<FlatAggregate>();
+            await persister.PersistChangesAsync(collection.Object, trackedCollection, session);
+
+            collection.Verify();
+            collection.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        public async Task Persist_TwoUpdated_Success()
+        {
+            var collection = MongoCollectionHelper.SetupCollectionWithSession<FlatAggregate>(out var session);
+            var trackedCollection = new TrackedModelCollection<FlatAggregate>();
+            var model1 = new FlatAggregate();
+            var model2 = new FlatAggregate();
+            trackedCollection.Existing(model1);
+            trackedCollection.Existing(model2);
+            model1.Name = "Jane Doe";
+            model2.Name = "Bob Sinclair";
+
+            collection.ExpectObjectsUpdated(model1, model2);
+
+            var persister = new TrackedModelPersister<FlatAggregate>();
+            await persister.PersistChangesAsync(collection.Object, trackedCollection, session);
+
+            collection.Verify();
+            collection.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        public async Task Persist_NoneUpdated_DatabaseNotCalled()
+        {
+            var collection = MongoCollectionHelper.SetupCollectionWithSession<FlatAggregate>(out var session);
+            var trackedCollection = new TrackedModelCollection<FlatAggregate>();
+            var model1 = new FlatAggregate();
+            var model2 = new FlatAggregate();
+            trackedCollection.Existing(model1);
+            trackedCollection.Existing(model2);
+
+            var persister = new TrackedModelPersister<FlatAggregate>();
+            await persister.PersistChangesAsync(collection.Object, trackedCollection, session);
+
+            collection.VerifyNoObjectsUpdated();
             collection.VerifyNoOtherCalls();
         }
     }

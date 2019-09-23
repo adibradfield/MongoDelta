@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
+using MongoDelta.MongoDbHelpers;
 
-namespace MongoDelta
+namespace MongoDelta.ChangeTracking
 {
     class TrackedModelPersister<T> where T : class
     {
@@ -15,10 +14,12 @@ namespace MongoDelta
             {
                 await InsertNewModels(collection, session, trackedModels);
                 await DeleteRemovedModels(collection, session, trackedModels);
+                await UpdateChangedModels(collection, session, trackedModels);
             });
         }
 
-        private async Task InsertNewModels(IMongoCollection<T> collection, IClientSessionHandle session, TrackedModelCollection<T> trackedModels)
+        private async Task InsertNewModels(IMongoCollection<T> collection, IClientSessionHandle session, 
+            TrackedModelCollection<T> trackedModels)
         {
             var newModels = trackedModels.OfState(TrackedModelState.New).Select(m => m.Model).ToArray();
             if (newModels.Any())
@@ -27,21 +28,30 @@ namespace MongoDelta
             }
         }
 
-        private async Task DeleteRemovedModels(IMongoCollection<T> collection, IClientSessionHandle session, TrackedModelCollection<T> trackedModels)
+        private async Task DeleteRemovedModels(IMongoCollection<T> collection, IClientSessionHandle session, 
+            TrackedModelCollection<T> trackedModels)
         {
             var removedModels = trackedModels.OfState(TrackedModelState.Removed).Select(m => m.Model).ToArray();
             if (removedModels.Any())
             {
-                var mapper = BsonClassMap.LookupClassMap(typeof(T));
-                var idSerializer = mapper.IdMemberMap.GetSerializer();
-                var idsToRemove = removedModels.Select(m => idSerializer.ToBsonValue(mapper.IdMemberMap.Getter(m))).ToArray();
-                var idElementName = mapper.IdMemberMap.ElementName;
-                await collection.DeleteManyAsync(session, new BsonDocument(idElementName,
-                    new BsonDocument("$in", new BsonArray(idsToRemove))));
+                await collection.DeleteManyAsync(session, GenericBsonFilters.MatchMultipleById(removedModels));
             }
         }
 
-        private async Task ExecuteWithClientSession(IMongoCollection<T> collection, IClientSessionHandle session, Func<IClientSessionHandle, Task> action)
+        private async Task UpdateChangedModels(IMongoCollection<T> collection, IClientSessionHandle session,
+            TrackedModelCollection<T> trackedModels)
+        {
+            var updatedModels = trackedModels.OfState(TrackedModelState.Existing).Where(m => m.IsDirty)
+                .Select(m => m.Model).ToArray();
+            
+            foreach(var model in updatedModels)
+            {
+                await collection.ReplaceOneAsync(session, GenericBsonFilters.MatchSingleById(model), model);
+            }
+        }
+
+        private async Task ExecuteWithClientSession(IMongoCollection<T> collection, IClientSessionHandle session, 
+            Func<IClientSessionHandle, Task> action)
         {
             var closeSession = false;
             if (session == null)

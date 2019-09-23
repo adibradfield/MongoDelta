@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
+using MongoDelta.MongoDbHelpers;
 using MongoDelta.UnitTests.Models;
 using Moq;
 using NUnit.Framework;

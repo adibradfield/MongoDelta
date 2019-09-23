@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using Moq;
@@ -68,6 +69,27 @@ namespace MongoDelta.UnitTests.Helpers
         {
             collection.Verify(c => c.DeleteManyAsync(It.IsAny<IClientSessionHandle>(),
                 It.IsAny<FilterDefinition<TAggregate>>(), It.IsAny<DeleteOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        public static void ExpectObjectsUpdated<TAggregate>(this Mock<IMongoCollection<TAggregate>> collection,
+            params TAggregate[] modelsToUpdate)
+        {
+            foreach (var aggregate in modelsToUpdate)
+            {
+                var updateMethod = collection.Setup(c => c.ReplaceOneAsync(It.IsAny<IClientSessionHandle>(),
+                    It.IsAny<FilterDefinition<TAggregate>>(), aggregate, It.IsAny<UpdateOptions>(),
+                    It.IsAny<CancellationToken>()));
+                updateMethod.Verifiable();
+                updateMethod.Returns(
+                    Task.FromResult((ReplaceOneResult) new ReplaceOneResult.Acknowledged(1, 1, BsonNull.Value)));
+            }
+        }
+
+        public static void VerifyNoObjectsUpdated<TAggregate>(this Mock<IMongoCollection<TAggregate>> collection)
+        {
+            collection.Verify(c => c.ReplaceOneAsync(It.IsAny<IClientSessionHandle>(),
+                It.IsAny<FilterDefinition<TAggregate>>(), It.IsAny<TAggregate>(), It.IsAny<UpdateOptions>(),
+                It.IsAny<CancellationToken>()), Times.Never);
         }
     }
 }

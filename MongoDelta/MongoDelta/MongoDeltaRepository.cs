@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
+using MongoDelta.ChangeTracking;
+using MongoDelta.MongoDbHelpers;
 
 namespace MongoDelta
 {

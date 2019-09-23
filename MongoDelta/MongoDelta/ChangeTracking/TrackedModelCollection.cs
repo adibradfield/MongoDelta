@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MongoDelta
+namespace MongoDelta.ChangeTracking
 {
     class TrackedModelCollection<T> : IEnumerable<TrackedModel<T>> where T : class
     {

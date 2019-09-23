@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using MongoDB.Driver.Linq;
 
-namespace MongoDelta
+namespace MongoDelta.MongoDbHelpers
 {
     public interface IMongoQueryRunner
     {

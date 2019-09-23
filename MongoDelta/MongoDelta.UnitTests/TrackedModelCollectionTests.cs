@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using MongoDelta.ChangeTracking;
 using MongoDelta.UnitTests.Models;
 using NUnit.Framework;
 
