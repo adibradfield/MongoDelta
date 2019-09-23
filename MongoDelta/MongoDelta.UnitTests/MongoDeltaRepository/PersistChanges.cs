@@ -3,6 +3,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Driver;
+using MongoDelta.UnitTests.Helpers;
+using MongoDelta.UnitTests.Models;
 using Moq;
 using NUnit.Framework;
 
@@ -14,13 +16,13 @@ namespace MongoDelta.UnitTests.MongoDeltaRepository
         [Test]
         public async Task AddSingle_Success()
         {
-            var model = new TestAggregate();
+            var model = new BlankAggregate();
 
             var collection = SetupCollectionForInsert(model);
 
-            var repository = new MongoDeltaRepository<TestAggregate>(collection.Object);
+            var repository = new MongoDeltaRepository<BlankAggregate>(collection.Object);
             repository.Add(model);
-            await repository.PersistChangesAsync();
+            await repository.CommitChangesAsync();
             collection.Verify();
         }
 
@@ -29,20 +31,20 @@ namespace MongoDelta.UnitTests.MongoDeltaRepository
         {
             var collection = SetupCollectionForNoInsert();
 
-            var repository = new MongoDeltaRepository<TestAggregate>(collection.Object);
-            await repository.PersistChangesAsync();
-            collection.Verify(c => c.InsertManyAsync(It.IsAny<IClientSessionHandle>(), It.IsAny<IEnumerable<TestAggregate>>(),
+            var repository = new MongoDeltaRepository<BlankAggregate>(collection.Object);
+            await repository.CommitChangesAsync();
+            collection.Verify(c => c.InsertManyAsync(It.IsAny<IClientSessionHandle>(), It.IsAny<IEnumerable<BlankAggregate>>(),
                 It.IsAny<InsertManyOptions>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
-        private static Mock<IMongoCollection<TestAggregate>> SetupCollectionForInsert(TestAggregate model)
+        private static Mock<IMongoCollection<BlankAggregate>> SetupCollectionForInsert(BlankAggregate model)
         {
-            var collection = SetupCollectionWithSession(out var session);
+            var collection = MongoCollectionHelper.SetupCollectionWithSession<BlankAggregate>(out var session);
 
-            var insertManyMethod = collection.Setup(c => c.InsertManyAsync(session, It.IsAny<IEnumerable<TestAggregate>>(),
+            var insertManyMethod = collection.Setup(c => c.InsertManyAsync(session, It.IsAny<IEnumerable<BlankAggregate>>(),
                 It.IsAny<InsertManyOptions>(), It.IsAny<CancellationToken>()));
             insertManyMethod.Verifiable();
-            insertManyMethod.Callback((IClientSessionHandle sessionHandle, IEnumerable<TestAggregate> documents,
+            insertManyMethod.Callback((IClientSessionHandle sessionHandle, IEnumerable<BlankAggregate> documents,
                 InsertManyOptions options, CancellationToken ctx) =>
             {
                 var insertedModel = documents.Single();
@@ -51,26 +53,10 @@ namespace MongoDelta.UnitTests.MongoDeltaRepository
             return collection;
         }
 
-        private static Mock<IMongoCollection<TestAggregate>> SetupCollectionForNoInsert()
+        private static Mock<IMongoCollection<BlankAggregate>> SetupCollectionForNoInsert()
         {
-            var collection = SetupCollectionWithSession(out _);
+            var collection = MongoCollectionHelper.SetupCollectionWithSession<BlankAggregate>(out _);
             return collection;
         }
-
-        private static Mock<IMongoCollection<TestAggregate>> SetupCollectionWithSession(out IClientSessionHandle session)
-        {
-            var collection = new Mock<IMongoCollection<TestAggregate>>();
-            var database = new Mock<IMongoDatabase>();
-            var client = new Mock<IMongoClient>();
-            session = new Mock<IClientSessionHandle>().Object;
-
-            collection.SetupGet(c => c.Database).Returns(database.Object);
-            database.SetupGet(d => d.Client).Returns(client.Object);
-            client.Setup(c => c.StartSession(It.IsAny<ClientSessionOptions>(), It.IsAny<CancellationToken>()))
-                .Returns(session);
-            return collection;
-        }
-
-        public class TestAggregate{}
     }
 }

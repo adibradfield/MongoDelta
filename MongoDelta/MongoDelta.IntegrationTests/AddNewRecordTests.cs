@@ -39,7 +39,7 @@ namespace MongoDelta.IntegrationTests
                 FirstName = "John",
                 Surname = "Smith"
             });
-            await repository.PersistChangesAsync();
+            await repository.CommitChangesAsync();
 
             var queryResult = await repository.QuerySingleAsync(query => query.Where(user => user.FirstName == "John"));
             Assert.IsNotNull(queryResult);
@@ -65,7 +65,7 @@ namespace MongoDelta.IntegrationTests
 
             repository.Add(person1);
             repository.Add(person2);
-            await repository.PersistChangesAsync();
+            await repository.CommitChangesAsync();
 
             var person1Result = await repository.QuerySingleAsync(query => query.Where(user => user.Id == person1.Id));
             var person2Result = await repository.QuerySingleAsync(query => query.Where(user => user.Id == person2.Id));
