@@ -47,7 +47,7 @@ steps:
   inputs:
     command: 'pack'
     packagesToPack: '**/MongoDelta.csproj'
-    configuration: 'Release'
+    configuration: '$(buildConfiguration)'
     versioningScheme: 'byPrereleaseNumber'
     majorVersion: '1'
     minorVersion: '0'
