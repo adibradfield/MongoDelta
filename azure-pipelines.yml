@@ -4,7 +4,12 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
 trigger:
-- master
+ branches:
+   include:
+     - '*'
+ paths:
+   include:
+     - MongoDelta/*
 
 pool:
   vmImage: 'windows-latest'
@@ -36,4 +41,4 @@ steps:
   inputs:
     command: test
     projects: '**/*UnitTests/*.csproj'
-    arguments: '--configuration $(buildConfiguration)'
+    arguments: '--configuration $(buildConfiguration) --collect "Code coverage"'
