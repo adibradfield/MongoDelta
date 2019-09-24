@@ -1,38 +1,17 @@
-using System;
 using System.Threading.Tasks;
-using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 using MongoDelta.IntegrationTests.Models;
 using NUnit.Framework;
 
 namespace MongoDelta.IntegrationTests
 {
-    public class AddNewRecordTests
+    [TestFixture]
+    public class AddNewRecordTests : MongoTestBase
     {
-        private string _connectionString;
-        private string _databaseName;
-        private MongoClient _client;
-        private IMongoDatabase _database;
-
-        [OneTimeSetUp]
-        public void Setup()
-        {
-            _connectionString = "mongodb://localhost:27017/?retryWrites=false";
-            _databaseName = Guid.NewGuid().ToString();
-            _client = new MongoClient(_connectionString);
-            _database = _client.GetDatabase(_databaseName);
-        }
-
-        [OneTimeTearDown]
-        public void TearDown()
-        {
-            _client.DropDatabase(_databaseName);
-        }
-
         [Test]
         public async Task AddAndRetrieve_SimpleObject_Success()
         {
-            var unitOfWork = new UserUnitOfWork(_database);
+            var unitOfWork = new UserUnitOfWork(Database, CollectionName);
             unitOfWork.Users.Add(new UserAggregate()
             {
                 FirstName = "John",
@@ -47,7 +26,7 @@ namespace MongoDelta.IntegrationTests
         [Test]
         public async Task AddAndRetrieve_MultipleSimpleObjects_Success()
         {
-            var unitOfWork = new UserUnitOfWork(_database);
+            var unitOfWork = new UserUnitOfWork(Database, CollectionName);
 
             var person1 = new UserAggregate()
             {

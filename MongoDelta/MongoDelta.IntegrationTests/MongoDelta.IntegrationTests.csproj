@@ -6,6 +6,12 @@
     <IsPackable>false</IsPackable>
 
     <LangVersion>8.0</LangVersion>
+
+    <Configurations>Debug;Release;CI</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='CI|AnyCPU'">
+    <DefineConstants>TRACE;CI</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
