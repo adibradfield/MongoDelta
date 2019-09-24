@@ -17,8 +17,7 @@ variables:
 steps:
 - task: DotNetCoreInstaller@0
   inputs:
-    version: '3.0.x'
-    includePreviewVersions: true
+    version: '3.0.100-rc1-014190'
 
 - task: NuGetToolInstaller@1
 
