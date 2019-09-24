@@ -7,7 +7,8 @@ using NUnit.Framework;
 
 namespace MongoDelta.IntegrationTests
 {
-    public class RemoveRecordTests
+    [TestFixture]
+    class UpdateRecordTests
     {
         private string _connectionString;
         private string _databaseName;
@@ -30,7 +31,7 @@ namespace MongoDelta.IntegrationTests
         }
 
         [Test]
-        public async Task AddAndRemove_SimpleObject_Success()
+        public async Task AddAndUpdate_SimpleObject_Success()
         {
             var collectionName = Guid.NewGuid().ToString();
             var testUser = await UserAggregate.AddTestUser(_database, collectionName);
@@ -38,11 +39,12 @@ namespace MongoDelta.IntegrationTests
             var unitOfWork = new UserUnitOfWork(_database, collectionName);
             var model = await unitOfWork.Users.QuerySingleAsync(query =>
                 query.Where(user => user.Id == testUser.Id));
-            unitOfWork.Users.Remove(model);
+
+            model.FirstName = "Bobby";
             await unitOfWork.CommitAsync();
 
-            var removeQueryResult = await unitOfWork.Users.QuerySingleAsync(query => query.Where(user => user.FirstName == "John"));
-            Assert.IsNull(removeQueryResult);
+            var updateQuery = await unitOfWork.Users.QuerySingleAsync(query => query.Where(user => user.FirstName == "Bobby"));
+            Assert.IsNotNull(updateQuery);
         }
     }
 }

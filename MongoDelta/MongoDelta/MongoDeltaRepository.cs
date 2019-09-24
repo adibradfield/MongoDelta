@@ -9,7 +9,13 @@ using MongoDelta.MongoDbHelpers;
 
 namespace MongoDelta
 {
-    public class MongoDeltaRepository<T> where T : class
+    public abstract class MongoDeltaRepository
+    {
+        protected internal MongoDeltaRepository(){}
+        internal abstract Task CommitChangesAsync(IClientSessionHandle session = null);
+    }
+
+    public class MongoDeltaRepository<T> : MongoDeltaRepository where T : class
     {
         private readonly IMongoCollection<T> _collection;
         private readonly IMongoCollectionToQueryableConverter _collectionToQueryableConverter;
@@ -69,7 +75,7 @@ namespace MongoDelta
             _trackedModels.Remove(model);
         }
 
-        public async Task CommitChangesAsync(IClientSessionHandle session = null)
+        internal override async Task CommitChangesAsync(IClientSessionHandle session = null)
         {
             await _trackedModelPersister.PersistChangesAsync(_collection, _trackedModels, session);
         }
