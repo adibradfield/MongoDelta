@@ -14,9 +14,11 @@ variables:
   buildConfiguration: 'CLI'
 
 steps:
-- task: DotNetCoreInstaller@0
+
+- task: UseDotNet@2
   inputs:
-    version: '3.0.100-rc1-014190'
+    packageType: 'sdk'
+    useGlobalJson: true
   displayName: 'Install DotNet Core'
 
 - task: NuGetToolInstaller@1
@@ -38,10 +40,8 @@ steps:
 - task: DotNetCoreCLI@2
   inputs:
     command: test
-    projects: '**/*Tests/*.csproj'
+    projects: '**/*UnitTests/*.csproj'
     arguments: '--configuration $(buildConfiguration)'
-  env:
-    MONGO_DELTA_CONNECTION_STRING: 'mongodb://localhost:C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==localhost:10255/admin?ssl=true'
   displayName: 'Run Tests'
 
 - task: NuGetCommand@2
