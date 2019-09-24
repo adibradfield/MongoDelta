@@ -46,7 +46,7 @@ steps:
 - task: NuGetCommand@2
   inputs:
     command: 'pack'
-    packagesToPack: '**/*.csproj'
+    packagesToPack: '**/MongoDelta.csproj'
     configuration: 'Release'
     versioningScheme: 'byPrereleaseNumber'
     majorVersion: '1'
