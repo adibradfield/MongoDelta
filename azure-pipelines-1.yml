@@ -48,7 +48,10 @@ steps:
     command: 'pack'
     packagesToPack: '**/*.csproj'
     configuration: 'Release'
-    versioningScheme: 'byBuildNumber'
+    versioningScheme: 'byPrereleaseNumber'
+    majorVersion: '1'
+    minorVersion: '0'
+    patchVersion: '0'
   displayName: 'Create NuGet Package'
 
 - task: NuGetCommand@2
