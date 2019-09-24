@@ -1,4 +1,7 @@
 # MongoDelta
+
+![Azure DevOps builds (branch)](https://img.shields.io/azure-devops/build/adrianbradfield/df1cab1e-21bf-4a8e-a335-29d7a5b730ab/2/master?style=for-the-badge) ![Azure DevOps tests (compact)](https://img.shields.io/azure-devops/tests/adrianbradfield/df1cab1e-21bf-4a8e-a335-29d7a5b730ab/2/master?compact_message&style=for-the-badge) ![Azure DevOps coverage (branch)](https://img.shields.io/azure-devops/coverage/adrianbradfield/df1cab1e-21bf-4a8e-a335-29d7a5b730ab/2/master?style=for-the-badge) ![Nuget](https://img.shields.io/nuget/v/MongoDelta?style=for-the-badge) ![Nuget](https://img.shields.io/nuget/dt/MongoDelta?style=for-the-badge)
+
 Implements a repository pattern with chage tracking for the C# MongoDb driver, and allows you to update only changed properties
 
 This project is currently under initial development and is not ready for use
