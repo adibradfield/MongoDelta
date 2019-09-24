@@ -15,10 +15,9 @@ variables:
 
 steps:
 
-- task: UseDotNet@2
+- task: DotNetCoreInstaller@0
   inputs:
-    packageType: 'sdk'
-    useGlobalJson: true
+    version: '3.0.100-rc1-014190'
   displayName: 'Install DotNet Core'
 
 - task: NuGetToolInstaller@1
