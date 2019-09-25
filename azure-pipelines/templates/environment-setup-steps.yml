@@ -1,0 +1,16 @@
+parameters:
+  solution: ''
+
+steps:
+- task: DotNetCoreInstaller@0
+  inputs:
+    version: '3.0.100-rc1-014190'
+  displayName: 'Install DotNet Core'
+
+- task: NuGetToolInstaller@1
+  displayName: 'Install NuGet'
+
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '${{ parameters.solution }}'
+  displayName: 'Restore NuGet Packages'
