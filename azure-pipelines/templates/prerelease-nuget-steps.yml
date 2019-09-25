@@ -6,7 +6,7 @@ steps:
   inputs:
     command: 'pack'
     packagesToPack: '**/MongoDelta.csproj'
-    configuration: '$(parameters.buildConfiguration)'
+    configuration: '${{ parameters.buildConfiguration }}'
     versioningScheme: 'byPrereleaseNumber'
     majorVersion: '1'
     minorVersion: '1'

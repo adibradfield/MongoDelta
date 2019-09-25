@@ -12,5 +12,5 @@ steps:
 
 - task: NuGetCommand@2
   inputs:
-    restoreSolution: '$(parameters.solution)'
+    restoreSolution: '${{ parameters.solution }}'
   displayName: 'Restore NuGet Packages'

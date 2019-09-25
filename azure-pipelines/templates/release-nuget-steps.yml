@@ -7,7 +7,7 @@ steps:
     command: 'pack'
     packagesToPack: '**/MongoDelta.csproj'
     versioningScheme: 'off'
-    configuration: '$(parameters.buildConfiguration)'
+    configuration: '${{ parameters.buildConfiguration }}'
 
 - task: NuGetCommand@2
   inputs:

@@ -6,5 +6,5 @@ steps:
   inputs:
     command: test
     projects: '**/*UnitTests/*.csproj'
-    arguments: '--configuration $(parameters.buildConfiguration)  --collect "Code coverage"'
+    arguments: '--configuration ${{ parameters.buildConfiguration }} --collect "Code coverage"'
   displayName: 'Run Unit Tests'
