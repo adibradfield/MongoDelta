@@ -1,0 +1,13 @@
+parameters:
+  buildConfiguration: ''
+  buildPlatform: ''
+
+steps:
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'VSTest'
+    testResultsFiles: '**/*.trx'
+    searchFolder: '$(build.artifactStagingDirectory)\TestResults'
+    mergeTestResults: true
+    buildPlatform: '${{ parameters.buildPlatform }}'
+    buildConfiguration: '${{ parameters.buildConfiguration }}'
