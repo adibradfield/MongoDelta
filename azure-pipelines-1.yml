@@ -42,7 +42,7 @@ steps:
     script: |
       mkdir C:\mongodb\data\db
       mkdir C:\mongodb\logs
-      choco install mongodb /dataPath:"C:\mongodb\data" /logPath:"C:\mongodb\logs" --yes
+      choco install mongodb --yes
       $daemonExe = (Get-ChildItem -Path "C:\Program Files\MongoDB\Server\*\bin\mongod.exe")[0]
       &$daemonExe.FullName --logpath c:\mongodb\logs\mongo.log --dbpath c:\mongodb\data\db --directoryperdb --install
       Start-Service "MongoDb Server"
