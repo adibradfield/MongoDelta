@@ -6,5 +6,5 @@ steps:
   inputs:
     command: test
     projects: '**/*UnitTests/*.csproj'
-    arguments: '--configuration ${{ parameters.buildConfiguration }} --collect:"XPlat Code Coverage"'
+    arguments: '--configuration ${{ parameters.buildConfiguration }} --collect:"XPlat Code Coverage" --results-directory:"$(build.artifactStagingDirectory)\TestResults"'
   displayName: 'Run Unit Tests'
