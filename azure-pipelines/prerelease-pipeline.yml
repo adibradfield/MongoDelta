@@ -33,6 +33,6 @@ steps:
   parameters:
     buildConfiguration: $(buildConfiguration)
 
-- template: prerelease-nuget-steps.yml
+- template: templates/prerelease-nuget-steps.yml
   parameters:
     buildConfiguration: $(buildConfiguration)
