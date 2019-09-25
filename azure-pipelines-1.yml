@@ -36,20 +36,23 @@ steps:
     configuration: '$(buildConfiguration)'
   displayName: 'Build Solution'
 
+- task: ChocolateyCommand@0
+  inputs:
+    command: 'install'
+    installPackageId: 'mongodb'
+  displayName: 'Install MongoDb'
+
 - task: PowerShell@2
   inputs:
     targetType: 'inline'
     script: |
       mkdir C:\mongodb\data\db
       mkdir C:\mongodb\logs
-      try{
-      choco install mongodb --yes
-      }catch{}
       $daemonExe = (Get-ChildItem -Path "C:\Program Files\MongoDB\Server\*\bin\mongod.exe")[0]
       &$daemonExe.FullName --logpath c:\mongodb\logs\mongo.log --dbpath c:\mongodb\data\db --directoryperdb --install
       Start-Service "MongoDb Server"
     errorActionPreference: 'continue'
-  displayName: 'Install MongoDb via Chocolatey'
+  displayName: 'Run MongoDb as Service'
 
 - task: DotNetCoreCLI@2
   inputs:
