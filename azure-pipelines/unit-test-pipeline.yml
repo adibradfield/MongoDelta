@@ -28,3 +28,8 @@ steps:
 - template: templates/unit-test-steps.yml
   parameters:
     buildConfiguration: $(buildConfiguration)
+
+- template: templates/publish-test-results-steps.yml
+  parameters:
+    buildPlatform: $(buildPlatform)
+    buildConfiguration: $(buildConfiguration)

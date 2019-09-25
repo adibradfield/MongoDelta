@@ -10,9 +10,10 @@ steps:
 
 - task: DotNetCoreCLI@2
   inputs:
-    command: test
+    command: custom
+    custom: test
     projects: '**/*IntegrationTests/*.csproj'
-    arguments: '--configuration ${{ parameters.buildConfiguration }}  --collect "Code coverage"'
+    arguments: '--configuration ${{ parameters.buildConfiguration }} --logger:trx --collect:"XPlat Code Coverage" --results-directory:"$(build.artifactStagingDirectory)\TestResults"'
   displayName: 'Run Integration Tests'
   env: 
     MONGO_DELTA_CONNECTION_STRING: 'mongodb://localhost:27017/?retryWrites=false'

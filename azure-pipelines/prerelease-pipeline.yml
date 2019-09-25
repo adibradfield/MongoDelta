@@ -32,6 +32,13 @@ steps:
 - template: templates/integration-test-steps.yml
   parameters:
     buildConfiguration: $(buildConfiguration)
+    
+- template: templates/publish-test-results-steps.yml
+  parameters:
+    buildPlatform: $(buildPlatform)
+    buildConfiguration: $(buildConfiguration)
+
+- template: templates/publish-code-coverage-steps.yml
 
 - template: templates/prerelease-nuget-steps.yml
   parameters:
