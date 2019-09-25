@@ -1,0 +1,18 @@
+parameters:
+  buildConfiguration: ''
+
+steps:
+- task: ChocolateyCommand@0
+  inputs:
+    command: 'install'
+    installPackageId: 'mongodb.portable'
+  displayName: 'Install MongoDb and Run'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: test
+    projects: '**/*IntegrationTests/*.csproj'
+    arguments: '--configuration $(parameters.buildConfiguration)  --collect "Code coverage"'
+  displayName: 'Run Integration Tests'
+  env: 
+    MONGO_DELTA_CONNECTION_STRING: 'mongodb://localhost:27017/?retryWrites=false'
