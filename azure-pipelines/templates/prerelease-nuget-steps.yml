@@ -1,0 +1,22 @@
+parameters:
+  buildConfiguration: ''
+
+steps:
+- task: NuGetCommand@2
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/MongoDelta.csproj'
+    configuration: '${{ parameters.buildConfiguration }}'
+    versioningScheme: 'byPrereleaseNumber'
+    majorVersion: '1'
+    minorVersion: '1'
+    patchVersion: '0'
+  displayName: 'Create NuGet Package'
+
+- task: NuGetCommand@2
+  inputs:
+    command: 'push'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+    nuGetFeedType: 'internal'
+    publishVstsFeed: '9b2a4370-b342-4277-b881-051a0c90056c'
+  displayName: 'Push NuGet Package'

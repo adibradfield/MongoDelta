@@ -1,0 +1,10 @@
+parameters:
+  buildConfiguration: ''
+
+steps:
+- task: DotNetCoreCLI@2
+  inputs:
+    command: test
+    projects: '**/*UnitTests/*.csproj'
+    arguments: '--configuration ${{ parameters.buildConfiguration }} --collect "Code coverage"'
+  displayName: 'Run Unit Tests'
