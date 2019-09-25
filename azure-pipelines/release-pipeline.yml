@@ -36,6 +36,8 @@ steps:
   parameters:
     buildConfiguration: $(buildConfiguration)
 
+- template: templates/publish-code-coverage-steps.yml
+
 - template: templates/release-nuget-steps.yml
   parameters:
     buildConfiguration: 'Release'
