@@ -11,3 +11,4 @@ steps:
     mergeTestResults: true
     buildPlatform: '${{ parameters.buildPlatform }}'
     buildConfiguration: '${{ parameters.buildConfiguration }}'
+  condition: always()

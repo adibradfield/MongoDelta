@@ -1,9 +1,11 @@
 steps:
 - script: dotnet tool install -g dotnet-reportgenerator-globaltool
   displayName: 'Install Report Generator'
+  condition: always()
   
 - script: reportgenerator -reports:$(build.artifactStagingDirectory)\TestResults\**\coverage.cobertura.xml -targetdir:$(build.artifactStagingDirectory)\CodeCoverage -reporttypes:"HtmlInline_AzurePipelines;Cobertura"
   displayName: 'Create Coverage Report'
+  condition: always()
   
 - task: PublishCodeCoverageResults@1
   displayName: 'Publish code coverage'
@@ -11,3 +13,4 @@ steps:
     codeCoverageTool: Cobertura
     summaryFileLocation: '$(build.artifactStagingDirectory)\CodeCoverage\Cobertura.xml'
     reportDirectory: '$(build.artifactStagingDirectory)\CodeCoverageCodeCoverage'
+  condition: always()
