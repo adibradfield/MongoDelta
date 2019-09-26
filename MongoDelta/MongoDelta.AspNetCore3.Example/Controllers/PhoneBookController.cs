@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver.Linq;
 using MongoDelta.AspNetCore3.Example.Data;
 using MongoDelta.AspNetCore3.Example.Data.Models;
 using MongoDelta.AspNetCore3.Example.Models;
@@ -25,7 +24,7 @@ namespace MongoDelta.AspNetCore3.Example.Controllers
         [HttpGet]
         public async Task<IEnumerable<PersonResponseDto>> GetAsync(Guid phoneBookId)
         {
-            var people = await _unitOfWork.People.QueryAsync(query => query.Where(person => person.PhoneBookId == phoneBookId));
+            var people = await _unitOfWork.People.QueryAsync(person => person.PhoneBookId == phoneBookId);
             return people.Select(p => new PersonResponseDto()
             {
                 Id = p.Id,
@@ -37,8 +36,7 @@ namespace MongoDelta.AspNetCore3.Example.Controllers
         [HttpGet("{id}", Name = "Get")]
         public async Task<PersonResponseDto> Get(Guid phoneBookId, Guid id)
         {
-            var person = await _unitOfWork.People.QuerySingleAsync(query =>
-                query.Where(p => p.PhoneBookId == phoneBookId && p.Id == id));
+            var person = await _unitOfWork.People.QuerySingleAsync(p => p.PhoneBookId == phoneBookId && p.Id == id);
 
             if (person == null)
             {
@@ -78,8 +76,7 @@ namespace MongoDelta.AspNetCore3.Example.Controllers
         [HttpPut("{id}")]
         public async Task Put(Guid phoneBookId, Guid id, [FromBody] PersonRequestDto personRequest)
         {
-            var person = await _unitOfWork.People.QuerySingleAsync(query =>
-                query.Where(p => p.PhoneBookId == phoneBookId && p.Id == id));
+            var person = await _unitOfWork.People.QuerySingleAsync(p => p.PhoneBookId == phoneBookId && p.Id == id);
 
             if (person == null)
             {
@@ -96,8 +93,7 @@ namespace MongoDelta.AspNetCore3.Example.Controllers
         [HttpDelete("{id}")]
         public async Task Delete(Guid phoneBookId, Guid id)
         {
-            var person = await _unitOfWork.People.QuerySingleAsync(query =>
-                query.Where(p => p.PhoneBookId == phoneBookId && p.Id == id));
+            var person = await _unitOfWork.People.QuerySingleAsync(p => p.PhoneBookId == phoneBookId && p.Id == id);
 
             if (person == null)
             {
