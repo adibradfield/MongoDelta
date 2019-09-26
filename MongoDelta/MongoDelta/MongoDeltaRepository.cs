@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
@@ -54,8 +54,7 @@ namespace MongoDelta
         public async Task<T> QuerySingleAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> query)
         {
             var queryable = query(_collectionToQueryableConverter.GetQueryable(_collection));
-            var results = await _queryRunner.RunAsync(queryable);
-            var result = results.SingleOrDefault();
+            T result = await _queryRunner.RunSingleAsync(queryable);
 
             if (result != null)
             {
@@ -63,6 +62,16 @@ namespace MongoDelta
             }
 
             return result;
+        }
+
+        public async Task<IReadOnlyCollection<T>> QueryAsync(Expression<Func<T, bool>> filter)
+        {
+            return await QueryAsync(query => query.Where(filter));
+        }
+
+        public async Task<T> QuerySingleAsync(Expression<Func<T, bool>> filter)
+        {
+            return await QuerySingleAsync(query => query.Where(filter));
         }
 
         public void Add(T model)

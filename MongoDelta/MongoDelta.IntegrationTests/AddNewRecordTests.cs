@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using MongoDB.Driver.Linq;
 using MongoDelta.IntegrationTests.Models;
 using NUnit.Framework;
 
@@ -19,7 +18,7 @@ namespace MongoDelta.IntegrationTests
             });
             await unitOfWork.CommitAsync();
 
-            var queryResult = await unitOfWork.Users.QuerySingleAsync(query => query.Where(user => user.FirstName == "John"));
+            var queryResult = await unitOfWork.Users.QuerySingleAsync(user => user.FirstName == "John");
             Assert.IsNotNull(queryResult);
         }
 
@@ -43,8 +42,8 @@ namespace MongoDelta.IntegrationTests
             unitOfWork.Users.Add(person2);
             await unitOfWork.CommitAsync();
 
-            var person1Result = await unitOfWork.Users.QuerySingleAsync(query => query.Where(user => user.Id == person1.Id));
-            var person2Result = await unitOfWork.Users.QuerySingleAsync(query => query.Where(user => user.Id == person2.Id));
+            var person1Result = await unitOfWork.Users.QuerySingleAsync(user => user.Id == person1.Id);
+            var person2Result = await unitOfWork.Users.QuerySingleAsync(user => user.Id == person2.Id);
             Assert.IsNotNull(person1Result);
             Assert.IsNotNull(person2Result);
         }

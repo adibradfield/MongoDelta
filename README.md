@@ -5,6 +5,7 @@
 Implements a UnitOfWork pattern with change tracking for the C# MongoDb driver
 
 To use this library, you can install it into your project from [Nuget](https://www.nuget.org/packages/MongoDelta/)
+There are also extension methods available for integrating your UnitOfWork with ASP.NET Core 3's dependency injection from [Nuget](https://www.nuget.org/packages/MongoDelta.AspNetCore3/)
 
 ## The aims of this library are:
 - Create a UnitOfWork base class with change tracking, for use with MongoDb
@@ -14,7 +15,7 @@ To use this library, you can install it into your project from [Nuget](https://w
 
 ## Roadmap:
 - [x] *V1.0* - UnitofWork pattern with change tracking
-- [ ] *V1.1* - Integrate with ASP.NET Core for proper dependency injection behavior for the UnitOfWork
+- [x] *V1.1* - Integrate with ASP.NET Core for proper dependency injection behavior
 - [ ] *V1.2* - Incremental updates for the root document
 - [ ] *V1.3* - Incremental updates for sub-documents and numeric fields
 - [ ] *V1.4* - Incremental updates for collection fields
@@ -67,8 +68,8 @@ On the repository, there are 2 methods for querying:
 ```cs
 async Task QueryExample(Guid id){
   var unitOfWork = new UnitOfWork(_database);
-  var allBobs = await unitOfWork.Users.QueryAsync(query => query.Where(u => u.FirstName == "Bob"));
-  var singleUser = await unitOfWork.Users.QuerySingleAsync(query => query.Where(u => u.Id == id));
+  var allBobs = await unitOfWork.Users.QueryAsync(u => u.FirstName == "Bob");
+  var singleUser = await unitOfWork.Users.QuerySingleAsync(u => u.Id == id);
 }
 ```
 
@@ -93,7 +94,7 @@ Here we have added the user to the repository and committed the UnitOfWork. The 
 async Task UpdateExample(Guid id)
 {
   var unitOfWork = new UnitOfWork(_database);
-  var user = await unitOfWork.Users.QuerySingleAsync(query => query.Where(u => u.Id == id));
+  var user = await unitOfWork.Users.QuerySingleAsync(u => u.Id == id);
   
   user.FirstName = "Joan";
   await unitOfWork.CommitAsync();
@@ -109,10 +110,46 @@ Removing a document works much the same way as adding one
 async Task RemoveExample(Guid id)
 {
   var unitOfWork = new UnitOfWork(_database);
-  var user = await unitOfWork.Users.QuerySingleAsync(query => query.Where(u => u.Id == id));
+  var user = await unitOfWork.Users.QuerySingleAsync(u => u.Id == id);
   
   unitOfWork.Users.Remove(user);
   await unitOfWork.CommitAsync();
 }
 ```
 The document you are removing must have been queried from a repository belonging to the same unit of work, otherwise it will throw an exception
+
+### Integration with ASP.NET Core 3
+First you will need to intall this library from [Nuget](https://www.nuget.org/packages/MongoDelta.AspNetCore3/) into your application. This library provides a couple of extension methods to use when configuring your web application. `IApplicationBuilder.UseUnitOfWork` adds middleware to your application pipeline which creates a new instance of your UnitOfWork class for every request, whereas the `IServiceCollection.AddUnitOfWork` sets up the dependency injection to allow you to get the correct instance of your UnitOfWork when injecting it. These methods can be used like this:
+
+```cs
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddControllers();
+    services.AddUnitOfWork<IUnitOfWork, UnitOfWork>();
+
+    var client = new MongoClient("mongodb://localhost:27017/?retryWrites=false");
+    var database = client.GetDatabase("AspNetCore3_Example");
+    services.AddSingleton(database);
+}
+
+// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+{
+    if (env.IsDevelopment())
+    {
+        app.UseDeveloperExceptionPage();
+    }
+
+    app.UseUnitOfWork<UnitOfWork>();
+    app.UseRouting();
+
+    ...
+    
+}
+```
+
+Notice that when you register your UnitOfWork with the service collection, you also have to provide an interface. It is important that you always use this interface when injecting your UnitOfWork, as if you use the concrete class, you will get a new instance every time.
+
+You also need to register any dependencies that your UnitOfWork requires. In this example, the UnitOfWork required an instance of `IMongoDatabase`, so it has been registered as a Singleton.
+
+The UnitOfWork is also registered transiently, this means that you should never inject it into another dependency that is registered as a Singleton.

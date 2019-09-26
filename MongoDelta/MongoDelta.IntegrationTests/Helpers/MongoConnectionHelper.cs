@@ -1,4 +1,5 @@
-﻿using System;
+﻿// ReSharper disable once RedundantUsingDirective - Needed for CI Build
+using System;
 
 namespace MongoDelta.IntegrationTests.Helpers
 {

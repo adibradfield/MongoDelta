@@ -5,12 +5,12 @@ steps:
 - task: NuGetCommand@2
   inputs:
     command: 'pack'
-    packagesToPack: '**/MongoDelta.csproj'
+    packagesToPack: '**/MongoDelta.csproj;**/MongoDelta.AspNetCore3.csproj'
     configuration: '${{ parameters.buildConfiguration }}'
     versioningScheme: 'byPrereleaseNumber'
     majorVersion: '1'
-    minorVersion: '0'
-    patchVersion: '2'
+    minorVersion: '1'
+    patchVersion: '0'
   displayName: 'Create NuGet Package'
 
 - task: NuGetCommand@2

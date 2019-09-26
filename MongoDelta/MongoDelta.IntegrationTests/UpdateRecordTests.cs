@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using MongoDB.Driver.Linq;
 using MongoDelta.IntegrationTests.Models;
 using NUnit.Framework;
 
@@ -14,13 +13,12 @@ namespace MongoDelta.IntegrationTests
             var testUser = await UserAggregate.AddTestUser(Database, CollectionName);
 
             var unitOfWork = new UserUnitOfWork(Database, CollectionName);
-            var model = await unitOfWork.Users.QuerySingleAsync(query =>
-                query.Where(user => user.Id == testUser.Id));
+            var model = await unitOfWork.Users.QuerySingleAsync(user => user.Id == testUser.Id);
 
             model.FirstName = "Bobby";
             await unitOfWork.CommitAsync();
 
-            var updateQuery = await unitOfWork.Users.QuerySingleAsync(query => query.Where(user => user.FirstName == "Bobby"));
+            var updateQuery = await unitOfWork.Users.QuerySingleAsync(user => user.FirstName == "Bobby");
             Assert.IsNotNull(updateQuery);
         }
     }
