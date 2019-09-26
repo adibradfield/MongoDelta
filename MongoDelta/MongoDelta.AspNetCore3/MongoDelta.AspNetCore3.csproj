@@ -7,6 +7,7 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <RepositoryUrl>https://github.com/adibradfield/MongoDelta/</RepositoryUrl>
     <PackageTags>mongodb repository-pattern unit-of-work change-detection</PackageTags>
+    <Configurations>Debug;Release;CI</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
