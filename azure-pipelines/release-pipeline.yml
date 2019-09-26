@@ -1,0 +1,48 @@
+trigger:
+  branches:
+      include:
+        - master
+  paths:
+    include:
+      - MongoDelta/*
+
+pr: none
+  
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'CI'
+
+steps:
+
+- template: templates/environment-setup-steps.yml
+  parameters:
+    solution: $(solution)
+    
+- template: templates/build-steps.yml
+  parameters:
+    solution: $(solution)
+    buildPlatform: $(buildPlatform)
+    buildConfiguration: $(buildConfiguration)
+    
+- template: templates/unit-test-steps.yml
+  parameters:
+    buildConfiguration: $(buildConfiguration)
+    
+- template: templates/integration-test-steps.yml
+  parameters:
+    buildConfiguration: $(buildConfiguration)
+
+- template: templates/publish-test-results-steps.yml
+  parameters:
+    buildPlatform: $(buildPlatform)
+    buildConfiguration: $(buildConfiguration)
+
+- template: templates/publish-code-coverage-steps.yml
+
+- template: templates/release-nuget-steps.yml
+  parameters:
+    buildConfiguration: 'Release'

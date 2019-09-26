@@ -1,0 +1,11 @@
+parameters:
+  buildConfiguration: ''
+
+steps:
+- task: DotNetCoreCLI@2
+  inputs:
+    command: custom
+    custom: test
+    projects: '**/*UnitTests/*.csproj'
+    arguments: '--configuration ${{ parameters.buildConfiguration }} --logger:trx --collect:"XPlat Code Coverage" --results-directory:"$(build.artifactStagingDirectory)\TestResults"'
+  displayName: 'Run Unit Tests'

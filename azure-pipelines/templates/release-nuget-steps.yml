@@ -1,0 +1,18 @@
+parameters:
+  buildConfiguration: ''
+
+steps:
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/MongoDelta.csproj'
+    versioningScheme: 'off'
+    configuration: '${{ parameters.buildConfiguration }}'
+
+- task: NuGetCommand@2
+  inputs:
+    command: 'push'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+    nuGetFeedType: 'external'
+    publishFeedCredentials: 'Nuget'
+  displayName: 'Push NuGet Package'
