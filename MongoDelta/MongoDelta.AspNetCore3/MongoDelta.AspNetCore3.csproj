@@ -1,7 +1,12 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Authors>Adrian Bradfield</Authors>
+    <Description>Provides extension methods for integrating MongoDelta into the configuration for an ASP.NET Core 3 application</Description>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <RepositoryUrl>https://github.com/adibradfield/MongoDelta/</RepositoryUrl>
+    <PackageTags>mongodb repository-pattern unit-of-work change-detection</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,6 +18,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MongoDelta\MongoDelta.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
