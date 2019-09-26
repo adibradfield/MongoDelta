@@ -11,5 +11,10 @@ namespace MongoDelta.MongoDbHelpers
         {
             return await query.ToListAsync();
         }
+
+        public async Task<T> RunSingleAsync<T>(IMongoQueryable<T> query)
+        {
+            return await query.SingleOrDefaultAsync();
+        }
     }
 }

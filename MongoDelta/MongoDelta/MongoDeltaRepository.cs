@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
@@ -54,8 +53,7 @@ namespace MongoDelta
         public async Task<T> QuerySingleAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> query)
         {
             var queryable = query(_collectionToQueryableConverter.GetQueryable(_collection));
-            var results = await _queryRunner.RunAsync(queryable);
-            var result = results.SingleOrDefault();
+            T result = await _queryRunner.RunSingleAsync(queryable);
 
             if (result != null)
             {
