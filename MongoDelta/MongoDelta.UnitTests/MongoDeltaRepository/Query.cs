@@ -77,6 +77,8 @@ namespace MongoDelta.UnitTests.MongoDeltaRepository
             var queryRunner = new Mock<IMongoQueryRunner>();
             queryRunner.Setup(q => q.RunAsync(It.IsAny<IMongoQueryable<BlankAggregate>>()))
                 .Returns(Task.FromResult<IReadOnlyCollection<BlankAggregate>>(results));
+            queryRunner.Setup(q => q.RunSingleAsync(It.IsAny<IMongoQueryable<BlankAggregate>>()))
+                .Returns(() => Task.FromResult(results.SingleOrDefault()));
 
             var repository = new MongoDeltaRepository<BlankAggregate>(collection.Object, collectionToQueryableConverter.Object, queryRunner.Object);
             return repository;
