@@ -68,8 +68,8 @@ On the repository, there are 2 methods for querying:
 ```cs
 async Task QueryExample(Guid id){
   var unitOfWork = new UnitOfWork(_database);
-  var allBobs = await unitOfWork.Users.QueryAsync(query => query.Where(u => u.FirstName == "Bob"));
-  var singleUser = await unitOfWork.Users.QuerySingleAsync(query => query.Where(u => u.Id == id));
+  var allBobs = await unitOfWork.Users.QueryAsync(u => u.FirstName == "Bob");
+  var singleUser = await unitOfWork.Users.QuerySingleAsync(u => u.Id == id);
 }
 ```
 
@@ -94,7 +94,7 @@ Here we have added the user to the repository and committed the UnitOfWork. The 
 async Task UpdateExample(Guid id)
 {
   var unitOfWork = new UnitOfWork(_database);
-  var user = await unitOfWork.Users.QuerySingleAsync(query => query.Where(u => u.Id == id));
+  var user = await unitOfWork.Users.QuerySingleAsync(u => u.Id == id);
   
   user.FirstName = "Joan";
   await unitOfWork.CommitAsync();
@@ -110,7 +110,7 @@ Removing a document works much the same way as adding one
 async Task RemoveExample(Guid id)
 {
   var unitOfWork = new UnitOfWork(_database);
-  var user = await unitOfWork.Users.QuerySingleAsync(query => query.Where(u => u.Id == id));
+  var user = await unitOfWork.Users.QuerySingleAsync(u => u.Id == id);
   
   unitOfWork.Users.Remove(user);
   await unitOfWork.CommitAsync();
