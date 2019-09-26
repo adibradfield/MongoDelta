@@ -37,7 +37,7 @@ namespace MongoDelta.AspNetCore3.Example.Controllers
         public async Task<PersonResponseDto> Get(Guid phoneBookId, Guid id)
         {
             var person = await _unitOfWork.People.QuerySingleAsync(query =>
-                query.Where(person => person.PhoneBookId == phoneBookId && person.Id == id));
+                query.Where(p => p.PhoneBookId == phoneBookId && p.Id == id));
             
             if(person == null){return null;}
 
@@ -74,7 +74,7 @@ namespace MongoDelta.AspNetCore3.Example.Controllers
         public async Task Put(Guid phoneBookId, Guid id, [FromBody] PersonRequestDto personRequest)
         {
             var person = await _unitOfWork.People.QuerySingleAsync(query =>
-                query.Where(person => person.PhoneBookId == phoneBookId && person.Id == id));
+                query.Where(p => p.PhoneBookId == phoneBookId && p.Id == id));
 
             person.Name = personRequest.Name;
             person.PhoneNumber = personRequest.PhoneNumber;
@@ -86,7 +86,7 @@ namespace MongoDelta.AspNetCore3.Example.Controllers
         public async Task Delete(Guid phoneBookId, Guid id)
         {
             var person = await _unitOfWork.People.QuerySingleAsync(query =>
-                query.Where(person => person.PhoneBookId == phoneBookId && person.Id == id));
+                query.Where(p => p.PhoneBookId == phoneBookId && p.Id == id));
 
             _unitOfWork.People.Remove(person);
 
