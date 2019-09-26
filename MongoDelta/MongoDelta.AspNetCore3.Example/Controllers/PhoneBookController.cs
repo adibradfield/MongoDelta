@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver.Linq;
@@ -38,8 +39,12 @@ namespace MongoDelta.AspNetCore3.Example.Controllers
         {
             var person = await _unitOfWork.People.QuerySingleAsync(query =>
                 query.Where(p => p.PhoneBookId == phoneBookId && p.Id == id));
-            
-            if(person == null){return null;}
+
+            if (person == null)
+            {
+                HttpContext.Response.StatusCode = (int) HttpStatusCode.NotFound;
+                return null;
+            }
 
             return new PersonResponseDto()
             {
@@ -76,6 +81,12 @@ namespace MongoDelta.AspNetCore3.Example.Controllers
             var person = await _unitOfWork.People.QuerySingleAsync(query =>
                 query.Where(p => p.PhoneBookId == phoneBookId && p.Id == id));
 
+            if (person == null)
+            {
+                HttpContext.Response.StatusCode = (int) HttpStatusCode.NotFound;
+                return;
+            }
+
             person.Name = personRequest.Name;
             person.PhoneNumber = personRequest.PhoneNumber;
 
@@ -87,6 +98,12 @@ namespace MongoDelta.AspNetCore3.Example.Controllers
         {
             var person = await _unitOfWork.People.QuerySingleAsync(query =>
                 query.Where(p => p.PhoneBookId == phoneBookId && p.Id == id));
+
+            if (person == null)
+            {
+                HttpContext.Response.StatusCode = (int) HttpStatusCode.NotFound;
+                return;
+            }
 
             _unitOfWork.People.Remove(person);
 
