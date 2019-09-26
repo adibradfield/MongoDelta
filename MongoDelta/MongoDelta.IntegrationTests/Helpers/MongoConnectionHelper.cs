@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace MongoDelta.IntegrationTests.Helpers
+﻿namespace MongoDelta.IntegrationTests.Helpers
 {
     static class MongoConnectionHelper
     {

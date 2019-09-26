@@ -5,7 +5,7 @@ steps:
 - task: NuGetCommand@2
   inputs:
     command: 'pack'
-    packagesToPack: '**/MongoDelta.csproj'
+    packagesToPack: '**/MongoDelta.csproj;**/MongoDelta.AspNetCore3.csproj'
     configuration: '${{ parameters.buildConfiguration }}'
     versioningScheme: 'byPrereleaseNumber'
     majorVersion: '1'
