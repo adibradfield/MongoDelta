@@ -1,4 +1,7 @@
-﻿namespace MongoDelta.IntegrationTests.Helpers
+﻿// ReSharper disable once RedundantUsingDirective - Needed for CI Build
+using System;
+
+namespace MongoDelta.IntegrationTests.Helpers
 {
     static class MongoConnectionHelper
     {
