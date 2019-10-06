@@ -3,7 +3,7 @@ using MongoDB.Driver.Linq;
 
 namespace MongoDelta.MongoDbHelpers
 {
-    class MongoCollectionToQueryableConverter : IMongoCollectionToQueryableConverter
+    internal class MongoCollectionToQueryableConverter : IMongoCollectionToQueryableConverter
     {
         public IMongoQueryable<T> GetQueryable<T>(IMongoCollection<T> collection)
         {

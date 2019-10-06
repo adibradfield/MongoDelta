@@ -16,7 +16,7 @@ There are also extension methods available for integrating your UnitOfWork with 
 ## Roadmap:
 - [x] *V1.0* - UnitofWork pattern with change tracking
 - [x] *V1.1* - Integrate with ASP.NET Core for proper dependency injection behavior
-- [ ] *V1.2* - Incremental updates for the root document
+- [x] *V1.2* - Incremental updates for the root document
 - [ ] *V1.3* - Incremental updates for sub-documents and numeric fields
 - [ ] *V1.4* - Incremental updates for collection fields
 
@@ -117,6 +117,34 @@ async Task RemoveExample(Guid id)
 }
 ```
 The document you are removing must have been queried from a repository belonging to the same unit of work, otherwise it will throw an exception
+
+### Updating only changed properties
+You can set a class to update only changed properties in the same ways that you map the classes with the MongoDb Driver. To do it with code, you can use:
+```cs
+BsonClassMap.RegisterClassMap<AddressAggregate>(map =>
+{
+	map.UseDeltaUpdateStrategy();
+});
+```
+
+Or alternatively using an attribute:
+```cs
+[UseDeltaUpdateStrategy]
+public class AddressAggregate
+{
+	public Guid Id { get; set; }
+	public string HouseNumber { get; set; }
+	public string HouseName { get; set; }
+	public string Street { get; set; }
+	public string Town { get; set; }
+	public string Postcode { get; set; }
+}
+```
+
+When doing this, the model will be updated using an UpdateOne command rather than a ReplaceOne command, and only changed properties will be included in the update.
+
+To update only changed properties on sub-objects, you need to make sure that the sub-objects type is also mapped to use the delta update strategy.
+
 
 ### Integration with ASP.NET Core 3
 First you will need to intall this library from [Nuget](https://www.nuget.org/packages/MongoDelta.AspNetCore3/) into your application. This library provides a couple of extension methods to use when configuring your web application. `IApplicationBuilder.UseUnitOfWork` adds middleware to your application pipeline which creates a new instance of your UnitOfWork class for every request, whereas the `IServiceCollection.AddUnitOfWork` sets up the dependency injection to allow you to get the correct instance of your UnitOfWork when injecting it. These methods can be used like this:

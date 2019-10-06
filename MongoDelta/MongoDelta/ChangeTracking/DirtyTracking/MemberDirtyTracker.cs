@@ -3,26 +3,26 @@ using MongoDB.Bson.Serialization;
 
 namespace MongoDelta.ChangeTracking.DirtyTracking
 {
-    class MemberDirtyTracker<TAggregate> : IDirtyTracker where TAggregate : class
+    internal class MemberDirtyTracker : IMemberDirtyTracker
     {
-        private readonly TAggregate _aggregate;
+        private readonly object _aggregate;
         private readonly BsonMemberMap _memberMap;
 
-        public MemberDirtyTracker(TAggregate aggregate, BsonMemberMap memberMap)
+        public MemberDirtyTracker(object aggregate, BsonMemberMap memberMap, BsonValue originalValue)
         {
             _aggregate = aggregate;
             _memberMap = memberMap;
-            OriginalValue = GetBsonValue(aggregate);
+            OriginalValue = originalValue;
         }
 
-        private BsonValue GetBsonValue(TAggregate aggregate)
+        private BsonValue GetBsonValue(object aggregate)
         {
             return _memberMap.GetSerializer().ToBsonValue(_memberMap.Getter(aggregate));
         }
 
-        public object OriginalValue { get; }
-
-        public object CurrentValue => GetBsonValue(_aggregate);
-        public bool IsDirty => !OriginalValue.Equals(CurrentValue);
+        public BsonValue OriginalValue { get; }
+        public BsonValue CurrentValue => GetBsonValue(_aggregate);
+        public virtual bool IsDirty => !OriginalValue?.Equals(CurrentValue) ?? CurrentValue != null;
+        public string ElementName => _memberMap.ElementName;
     }
 }

@@ -1,30 +1,33 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using MongoDB.Bson.Serialization;
 
 namespace MongoDelta.ChangeTracking.DirtyTracking
 {
-    class AggregateDirtyTracker<TAggregate> : IDirtyTracker where TAggregate : class
+    internal class AggregateDirtyTracker<TAggregate> : IDirtyTracker, IObjectDirtyTracker where TAggregate : class
     {
-        private readonly Collection<IDirtyTracker> _memberDirtyTrackers;
+        private readonly TAggregate _aggregate;
+        private readonly Collection<IMemberDirtyTrackerTemplate> _memberDirtyTrackers;
 
         public AggregateDirtyTracker(TAggregate aggregate)
         {
-            _memberDirtyTrackers = new Collection<IDirtyTracker>(GetDirtyTrackers(aggregate));
+            _aggregate = aggregate;
+            _memberDirtyTrackers = new Collection<IMemberDirtyTrackerTemplate>(GetDirtyTrackers(aggregate));
         }
 
-        public bool IsDirty => _memberDirtyTrackers.Any(t => t.IsDirty);
+        public bool IsDirty => MemberTrackers.Any(t => t.IsDirty);
 
-        private List<IDirtyTracker> GetDirtyTrackers(TAggregate aggregate)
+        public IReadOnlyCollection<IMemberDirtyTracker> MemberTrackers =>
+            Array.AsReadOnly(_memberDirtyTrackers.ToTrackers(_aggregate).ToArray());
+
+        private List<IMemberDirtyTrackerTemplate> GetDirtyTrackers(TAggregate aggregate)
         {
             var mongoMapping = BsonClassMap.LookupClassMap(typeof(TAggregate));
-            return mongoMapping.AllMemberMaps.Select(map => CreateTrackerForMemberMap(aggregate, map)).ToList();
-        }
-
-        private IDirtyTracker CreateTrackerForMemberMap(TAggregate aggregate, BsonMemberMap map)
-        {
-            return new MemberDirtyTracker<TAggregate>(aggregate, map);
+            return mongoMapping.AllMemberMaps
+                .Select(map => DirtyTrackerProvider.GetTrackerTemplateForMember(aggregate, map))
+                .ToList();
         }
     }
 }
