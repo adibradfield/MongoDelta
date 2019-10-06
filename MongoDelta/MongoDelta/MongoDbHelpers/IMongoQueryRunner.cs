@@ -4,7 +4,7 @@ using MongoDB.Driver.Linq;
 
 namespace MongoDelta.MongoDbHelpers
 {
-    public interface IMongoQueryRunner
+    internal interface IMongoQueryRunner
     {
         Task<IReadOnlyCollection<T>> RunAsync<T>(IMongoQueryable<T> query);
         Task<T> RunSingleAsync<T>(IMongoQueryable<T> query);

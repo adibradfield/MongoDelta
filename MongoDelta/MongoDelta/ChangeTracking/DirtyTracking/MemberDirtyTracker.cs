@@ -3,7 +3,7 @@ using MongoDB.Bson.Serialization;
 
 namespace MongoDelta.ChangeTracking.DirtyTracking
 {
-    class MemberDirtyTracker<TAggregate> : IDirtyTracker where TAggregate : class
+    internal class MemberDirtyTracker<TAggregate> : IMemberDirtyTracker where TAggregate : class
     {
         private readonly TAggregate _aggregate;
         private readonly BsonMemberMap _memberMap;
@@ -20,9 +20,9 @@ namespace MongoDelta.ChangeTracking.DirtyTracking
             return _memberMap.GetSerializer().ToBsonValue(_memberMap.Getter(aggregate));
         }
 
-        public object OriginalValue { get; }
-
-        public object CurrentValue => GetBsonValue(_aggregate);
+        public BsonValue OriginalValue { get; }
+        public BsonValue CurrentValue => GetBsonValue(_aggregate);
         public bool IsDirty => !OriginalValue.Equals(CurrentValue);
+        public string ElementName => _memberMap.ElementName;
     }
 }

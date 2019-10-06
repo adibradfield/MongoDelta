@@ -1,28 +1,30 @@
 ﻿using System;
+using System.Collections.Generic;
 using MongoDelta.ChangeTracking.DirtyTracking;
 
 namespace MongoDelta.ChangeTracking
 {
-    public enum TrackedModelState
+    internal enum TrackedModelState
     {
         New,
         Removed,
         Existing
     }
 
-    class TrackedModel<T> where T :class
+    internal class TrackedModel<T> where T :class
     {
         private readonly AggregateDirtyTracker<T> _dirtyTracker;
 
         public static TrackedModel<T> New(T model) => new TrackedModel<T>(model, TrackedModelState.New);
         public static TrackedModel<T> Existing(T model) => new TrackedModel<T>(model, TrackedModelState.Existing);
         public bool IsDirty => _dirtyTracker.IsDirty;
+        public IReadOnlyCollection<IMemberDirtyTracker> MemberTrackers => _dirtyTracker.MemberTrackers;
 
-        private TrackedModel(T model, TrackedModelState state)
+        private TrackedModel(T model, TrackedModelState state, AggregateDirtyTracker<T> dirtyTracker = null)
         {
             Model = model ?? throw new ArgumentNullException(nameof(model));
             State = state;
-            _dirtyTracker = new AggregateDirtyTracker<T>(model);
+            _dirtyTracker = dirtyTracker ?? new AggregateDirtyTracker<T>(model);
         }
 
         public TrackedModelState State { get; }
@@ -30,7 +32,7 @@ namespace MongoDelta.ChangeTracking
 
         public TrackedModel<T> WithNewState(TrackedModelState newState)
         {
-            return new TrackedModel<T>(Model, newState);
+            return new TrackedModel<T>(Model, newState, _dirtyTracker);
         }
     }
 }

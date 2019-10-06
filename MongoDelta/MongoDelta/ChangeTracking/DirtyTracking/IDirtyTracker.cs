@@ -1,6 +1,6 @@
 ﻿namespace MongoDelta.ChangeTracking.DirtyTracking
 {
-    public interface IDirtyTracker
+    internal interface IDirtyTracker
     {
         bool IsDirty { get; }
     }
