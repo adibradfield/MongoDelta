@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using MongoDelta.ChangeTracking.DirtyTracking;
 
 namespace MongoDelta.ChangeTracking
@@ -18,7 +17,6 @@ namespace MongoDelta.ChangeTracking
         public static TrackedModel<T> New(T model) => new TrackedModel<T>(model, TrackedModelState.New);
         public static TrackedModel<T> Existing(T model) => new TrackedModel<T>(model, TrackedModelState.Existing);
         public bool IsDirty => _dirtyTracker.IsDirty;
-        public IReadOnlyCollection<IMemberDirtyTracker> MemberTrackers => _dirtyTracker.MemberTrackers;
 
         private TrackedModel(T model, TrackedModelState state, AggregateDirtyTracker<T> dirtyTracker = null)
         {
@@ -29,6 +27,7 @@ namespace MongoDelta.ChangeTracking
 
         public TrackedModelState State { get; }
         public T Model { get; }
+        public IObjectDirtyTracker DirtyTracker => _dirtyTracker;
 
         public TrackedModel<T> WithNewState(TrackedModelState newState)
         {
