@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace MongoDelta.ChangeTracking
 {
-    class TrackedModelCollection<T> : IEnumerable<TrackedModel<T>> where T : class
+    internal class TrackedModelCollection<T> : IEnumerable<TrackedModel<T>> where T : class
     {
         private readonly Dictionary<T, TrackedModel<T>> _trackedModels = new Dictionary<T, TrackedModel<T>>();
 

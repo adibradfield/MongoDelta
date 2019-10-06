@@ -3,10 +3,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using MongoDelta.MongoDbHelpers;
+using MongoDelta.UpdateStrategies;
 
 namespace MongoDelta.ChangeTracking
 {
-    class TrackedModelPersister<T> where T : class
+    internal class TrackedModelPersister<T> where T : class
     {
         public async Task PersistChangesAsync(IMongoCollection<T> collection, TrackedModelCollection<T> trackedModels, IClientSessionHandle existingSession = null)
         {
@@ -41,12 +42,12 @@ namespace MongoDelta.ChangeTracking
         private async Task UpdateChangedModels(IMongoCollection<T> collection, IClientSessionHandle session,
             TrackedModelCollection<T> trackedModels)
         {
-            var updatedModels = trackedModels.OfState(TrackedModelState.Existing).Where(m => m.IsDirty)
-                .Select(m => m.Model).ToArray();
-            
+            var updatedModels = trackedModels.OfState(TrackedModelState.Existing).Where(m => m.IsDirty).ToArray();
+            var updateStrategy = UpdateStrategy.ForType<T>();
+
             foreach(var model in updatedModels)
             {
-                await collection.ReplaceOneAsync(session, GenericBsonFilters.MatchSingleById(model), model);
+                await updateStrategy.Update(session, collection, model);
             }
         }
 

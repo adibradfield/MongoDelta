@@ -5,7 +5,7 @@ using MongoDB.Bson.Serialization;
 
 namespace MongoDelta.MongoDbHelpers
 {
-    static class GenericBsonFilters
+    internal static class GenericBsonFilters
     {
         public static BsonDocument MatchSingleById<TAggregate>(TAggregate aggregate)
         {
