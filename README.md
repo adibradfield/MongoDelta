@@ -16,8 +16,8 @@ There are also extension methods available for integrating your UnitOfWork with 
 ## Roadmap:
 - [x] *V1.0* - UnitofWork pattern with change tracking
 - [x] *V1.1* - Integrate with ASP.NET Core for proper dependency injection behavior
-- [x] *V1.2* - Incremental updates for the root document
-- [ ] *V1.3* - Incremental updates for sub-documents and numeric fields
+- [x] *V1.2* - Incremental updates for the root document and sub-documents
+- [ ] *V1.3* - Incremental updates for numeric fields
 - [ ] *V1.4* - Incremental updates for collection fields
 
 ## Getting Started
@@ -142,7 +142,8 @@ public class AddressAggregate
 ```
 
 When doing this, the model will be updated using an UpdateOne command rather than a ReplaceOne command, and only changed properties will be included in the update.
-Currently, this only works for properties on the root model, if you model contains other models, those will still be replaced if they have been changed.
+
+To update only changed properties on sub-objects, you need to make sure that the sub-objects type is also mapped to use the delta update strategy.
 
 ### Integration with ASP.NET Core 3
 First you will need to intall this library from [Nuget](https://www.nuget.org/packages/MongoDelta.AspNetCore3/) into your application. This library provides a couple of extension methods to use when configuring your web application. `IApplicationBuilder.UseUnitOfWork` adds middleware to your application pipeline which creates a new instance of your UnitOfWork class for every request, whereas the `IServiceCollection.AddUnitOfWork` sets up the dependency injection to allow you to get the correct instance of your UnitOfWork when injecting it. These methods can be used like this:
