@@ -22,6 +22,11 @@ namespace MongoDelta.ChangeTracking.DirtyTracking
         public static IEnumerable<IMemberDirtyTracker> ToTrackers(this IEnumerable<IMemberDirtyTrackerTemplate> templates,
             object aggregate)
         {
+            if (aggregate == null)
+            {
+                return new IMemberDirtyTracker[0];
+            }
+
             return templates.Select(t => t.ToDirtyTracker(aggregate));
         }
     }
