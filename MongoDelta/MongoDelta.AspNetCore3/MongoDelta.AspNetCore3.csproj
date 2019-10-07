@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -8,6 +8,7 @@
     <RepositoryUrl>https://github.com/adibradfield/MongoDelta/</RepositoryUrl>
     <PackageTags>mongodb repository-pattern unit-of-work change-detection</PackageTags>
     <Configurations>Debug;Release;CI</Configurations>
+    <Version>1.2.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
