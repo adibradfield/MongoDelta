@@ -10,7 +10,7 @@ steps:
     versioningScheme: 'byPrereleaseNumber'
     majorVersion: '1'
     minorVersion: '2'
-    patchVersion: '0'
+    patchVersion: '1'
   displayName: 'Create NuGet Package'
 
 - task: NuGetCommand@2
