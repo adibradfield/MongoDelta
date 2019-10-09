@@ -9,8 +9,8 @@ steps:
     configuration: '${{ parameters.buildConfiguration }}'
     versioningScheme: 'byPrereleaseNumber'
     majorVersion: '1'
-    minorVersion: '2'
-    patchVersion: '1'
+    minorVersion: '3'
+    patchVersion: '0'
   displayName: 'Create NuGet Package'
 
 - task: NuGetCommand@2
