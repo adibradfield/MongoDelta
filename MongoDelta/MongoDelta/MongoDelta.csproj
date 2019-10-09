@@ -3,12 +3,16 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Configurations>Debug;Release;CI</Configurations>
-    <Version>1.2.0</Version>
+    <Version>1.3.0</Version>
     <Authors>Adrian Bradfield</Authors>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <RepositoryUrl>https://github.com/adibradfield/MongoDelta/</RepositoryUrl>
     <PackageTags>mongodb repository-pattern unit-of-work change-detection</PackageTags>
     <Description>Provides a UnitOfWork base class with change tracking to use with MongoDb</Description>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>C:\Users\adria\source\repos\adibradfield\MongoDelta\MongoDelta\MongoDelta\MongoDelta.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

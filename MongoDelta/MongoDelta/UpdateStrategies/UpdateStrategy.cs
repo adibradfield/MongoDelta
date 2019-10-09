@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using MongoDB.Bson.Serialization;
+﻿using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using MongoDelta.ChangeTracking;
 using MongoDelta.Mapping;
@@ -11,8 +10,7 @@ namespace MongoDelta.UpdateStrategies
         public static UpdateStrategy<T> ForType<T>() where T : class
         {
             var classMap = BsonClassMap.LookupClassMap(typeof(T));
-            var updateConfig = classMap.GetDeltaUpdateConfiguration();
-            if (updateConfig.UseDeltaUpdateStrategy)
+            if (classMap.ShouldUseDeltaUpdateStrategy())
             {
                 return new DeltaUpdateStrategy<T>();
             }
@@ -25,6 +23,6 @@ namespace MongoDelta.UpdateStrategies
 
     internal abstract class UpdateStrategy<T> : UpdateStrategy where T : class
     {
-        public abstract Task Update(IClientSessionHandle session, IMongoCollection<T> collection, TrackedModel<T> trackedModel);
+        public abstract WriteModel<T> GetWriteModelForUpdate(TrackedModel<T> trackedModel);
     }
 }

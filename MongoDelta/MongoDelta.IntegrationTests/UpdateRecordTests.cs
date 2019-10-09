@@ -54,5 +54,92 @@ namespace MongoDelta.IntegrationTests
             Assert.AreEqual("30", result.HouseNumber);
             Assert.AreEqual("Wood Avenue", result.Street);
         }
+
+        [Test]
+        public async Task AddNewSubObject_WithDeltaUpdateStrategy_Success()
+        {
+            var createdCustomer = await CreateExistingCustomerAggregate();
+
+            var updateUnitOfWork = new CustomerUnitOfWork(Database, CollectionName);
+            var modelToUpdate = await updateUnitOfWork.Customers.QuerySingleAsync(c => c.Id == createdCustomer.Id);
+            modelToUpdate.DefaultAddresses.ShippingAddress = new AddressAggregate
+            {
+                HouseName = "Shipping Address"
+            };
+            await updateUnitOfWork.CommitAsync();
+
+            var updatedCustomer = await updateUnitOfWork.Customers.QuerySingleAsync(c => c.Id == createdCustomer.Id);
+            Assert.AreEqual("Shipping Address", updatedCustomer.DefaultAddresses.ShippingAddress.HouseName);
+        }
+
+        [Test]
+        public async Task RemoveSubObject_WithDeltaUpdateStrategy_Success()
+        {
+            var createdCustomer = await CreateExistingCustomerAggregate();
+
+            var updateUnitOfWork = new CustomerUnitOfWork(Database, CollectionName);
+            var modelToUpdate = await updateUnitOfWork.Customers.QuerySingleAsync(c => c.Id == createdCustomer.Id);
+            modelToUpdate.DefaultAddresses = null;
+            await updateUnitOfWork.CommitAsync();
+
+            var updatedCustomer = await updateUnitOfWork.Customers.QuerySingleAsync(c => c.Id == createdCustomer.Id);
+            Assert.IsNull(updatedCustomer.DefaultAddresses);
+        }
+
+        [Test]
+        public async Task UpdateFieldOfSubObject_WithDeltaUpdateStrategy_Success()
+        {
+            var createdCustomer = await CreateExistingCustomerAggregate();
+
+            var updateUnitOfWork = new CustomerUnitOfWork(Database, CollectionName);
+            var modelToUpdate = await updateUnitOfWork.Customers.QuerySingleAsync(c => c.Id == createdCustomer.Id);
+            modelToUpdate.DefaultAddresses.InvoiceAddress.HouseName = "New Address";
+            await updateUnitOfWork.CommitAsync();
+
+            var updatedCustomer = await updateUnitOfWork.Customers.QuerySingleAsync(c => c.Id == createdCustomer.Id);
+            Assert.AreEqual("New Address", updatedCustomer.DefaultAddresses.InvoiceAddress.HouseName);
+        }
+
+        [Test]
+        public async Task UpdateFieldsIncrementally_Success()
+        {
+            var createdModel = new IncrementalUpdateAggregate();
+            var createUnitOfWork =  new IncrementalUpdateUnitOfWork(Database, CollectionName);
+            createUnitOfWork.Models.Add(createdModel);
+            await createUnitOfWork.CommitAsync();
+
+            var updateUnitOfWork = new IncrementalUpdateUnitOfWork(Database, CollectionName);
+            var updateModel = await updateUnitOfWork.Models.QuerySingleAsync(m => m.Id == createdModel.Id);
+            updateModel.Integer += 5;
+            updateModel.Decimal += 10.2M;
+            updateModel.Long += 20;
+            updateModel.Name = "NewName";
+            await updateUnitOfWork.CommitAsync();
+
+            var updatedModel = await updateUnitOfWork.Models.QuerySingleAsync(m => m.Id == createdModel.Id);
+            Assert.AreEqual(updateModel.Integer, updatedModel.Integer);
+            Assert.AreEqual(updateModel.Decimal, updatedModel.Decimal);
+            Assert.AreEqual(updateModel.Long, updatedModel.Long);
+            Assert.AreEqual("NewName", updatedModel.Name);
+        }
+
+        private async Task<CustomerAggregate> CreateExistingCustomerAggregate()
+        {
+            var createUnitOfWork = new CustomerUnitOfWork(Database, CollectionName);
+            var createdCustomer = new CustomerAggregate
+            {
+                Name = "John Smith",
+                DefaultAddresses = new CustomerDefaultAddresses
+                {
+                    InvoiceAddress = new AddressAggregate
+                    {
+                        HouseName = "Invoice Address"
+                    }
+                }
+            };
+            createUnitOfWork.Customers.Add(createdCustomer);
+            await createUnitOfWork.CommitAsync();
+            return createdCustomer;
+        }
     }
 }

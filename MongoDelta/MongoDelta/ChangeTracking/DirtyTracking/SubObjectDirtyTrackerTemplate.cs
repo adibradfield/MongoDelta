@@ -15,8 +15,11 @@ namespace MongoDelta.ChangeTracking.DirtyTracking
         public SubObjectDirtyTrackerTemplate(object aggregate, BsonMemberMap map)
         {
             _map = map;
-            _originalValue = _map.GetSerializer().ToBsonValue(_map.Getter(aggregate));
-            _trackerTemplates = GetDirtyTrackerTemplates(_map.MemberType, _map.Getter(aggregate));
+
+            var currentSubObjectValue = aggregate == null ? null : _map.Getter(aggregate);
+
+            _originalValue = _map.GetSerializer().ToBsonValue(currentSubObjectValue);
+            _trackerTemplates = GetDirtyTrackerTemplates(_map.MemberType, currentSubObjectValue);
         }
 
         public IMemberDirtyTracker ToDirtyTracker(object aggregate)

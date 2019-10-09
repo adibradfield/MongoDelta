@@ -17,7 +17,7 @@ There are also extension methods available for integrating your UnitOfWork with 
 - [x] *V1.0* - UnitofWork pattern with change tracking
 - [x] *V1.1* - Integrate with ASP.NET Core for proper dependency injection behavior
 - [x] *V1.2* - Incremental updates for the root document
-- [ ] *V1.3* - Incremental updates for sub-documents and numeric fields
+- [x] *V1.3* - Incremental updates for sub-documents and numeric fields
 - [ ] *V1.4* - Incremental updates for collection fields
 
 ## Getting Started
@@ -145,6 +145,37 @@ When doing this, the model will be updated using an UpdateOne command rather tha
 
 To update only changed properties on sub-objects, you need to make sure that the sub-objects type is also mapped to use the delta update strategy.
 
+### Update numeric fields incrementally
+It's possible to update numeric properties incrementally. To be able to do this, the property must be serializable to one of the BSON types: Int32, Int64, Double or Decimal128.
+The class that contains the property must also use the delta update strategy. To map a property to be updated incrementally, you can do this in code by calling the `UpdateIncrementally` on the member map:
+```cs
+BsonClassMap.RegisterClassMap<IncrementNumeralsAggregate>(map =>
+{
+	map.UseDeltaUpdateStrategy();
+	map.MapProperty(m => m.Integer).UpdateIncrementally();
+});
+```
+Or alternatively you can use attributes:
+```cs
+[UseDeltaUpdateStrategy]
+class IncrementalUpdateAggregate
+{
+	public Guid Id { get; set; }
+
+	[UpdateIncrementally]
+	public int Integer { get; set; }
+
+	[UpdateIncrementally]
+	public long Long { get; set; }
+
+	[UpdateIncrementally]
+	[BsonRepresentation(BsonType.Decimal128)]
+	public decimal Decimal { get; set; }
+}
+```
+
+As you can see from the above example, to be able to incrementally update a decimal, you need to explicitly tell MongoDB to serialize it as the Decimal128 type.
+This is due to decimals being serialised as a string by default.
 
 ### Integration with ASP.NET Core 3
 First you will need to intall this library from [Nuget](https://www.nuget.org/packages/MongoDelta.AspNetCore3/) into your application. This library provides a couple of extension methods to use when configuring your web application. `IApplicationBuilder.UseUnitOfWork` adds middleware to your application pipeline which creates a new instance of your UnitOfWork class for every request, whereas the `IServiceCollection.AddUnitOfWork` sets up the dependency injection to allow you to get the correct instance of your UnitOfWork when injecting it. These methods can be used like this:
@@ -181,3 +212,57 @@ Notice that when you register your UnitOfWork with the service collection, you a
 You also need to register any dependencies that your UnitOfWork requires. In this example, the UnitOfWork required an instance of `IMongoDatabase`, so it has been registered as a Singleton.
 
 The UnitOfWork is also registered transiently, this means that you should never inject it into another dependency that is registered as a Singleton.
+
+## Performance
+The performance of using this library has been benchmarked against doing similar operations directly with the Mongo DB driver. The benchmarking 
+is performed against a local single node Mongo DB instance. The source code for the benchmarking can be found in the project `MongoDelta.Benchmarking`
+
+### Configuration
+``` ini
+
+BenchmarkDotNet=v0.11.5, OS=Windows 10.0.18362
+Intel Core i7-7500U CPU 2.70GHz (Kaby Lake), 1 CPU, 4 logical and 2 physical cores
+.NET Core SDK=3.0.100-rc1-014190
+  [Host]     : .NET Core 3.0.0-rc1-19456-20 (CoreCLR 4.700.19.45506, CoreFX 4.700.19.45604), 64bit RyuJIT
+  DefaultJob : .NET Core 3.0.0-rc1-19456-20 (CoreCLR 4.700.19.45506, CoreFX 4.700.19.45604), 64bit RyuJIT
+
+```
+
+### Inserts
+
+|                         Method | NumberOfRecords |     Mean |     Error |    StdDev | Ratio | RatioSD |
+|------------------------------- |---------------- |---------:|----------:|----------:|------:|--------:|
+| **&#39;Mongo DB Driver - InsertMany&#39;** |               **1** | **21.99 ms** | **0.2746 ms** | **0.2293 ms** |  **1.00** |    **0.00** |
+|                     MongoDelta |               1 | 21.90 ms | 0.4272 ms | 0.3996 ms |  0.99 |    0.01 |
+|                                |                 |          |           |           |       |         |
+| **&#39;Mongo DB Driver - InsertMany&#39;** |              **50** | **22.56 ms** | **0.4361 ms** | **0.4283 ms** |  **1.00** |    **0.00** |
+|                     MongoDelta |              50 | 22.89 ms | 0.4522 ms | 0.4441 ms |  1.02 |    0.03 |
+|                                |                 |          |           |           |       |         |
+| **&#39;Mongo DB Driver - InsertMany&#39;** |             **500** | **26.14 ms** | **0.4514 ms** | **0.4223 ms** |  **1.00** |    **0.00** |
+|                     MongoDelta |             500 | 28.74 ms | 0.4237 ms | 0.3756 ms |  1.10 |    0.02 |
+
+### Replace
+
+|                           Method | NumberOfRecords |      Mean |     Error |    StdDev | Ratio | RatioSD |
+|--------------------------------- |---------------- |----------:|----------:|----------:|------:|--------:|
+| **&#39;Mongo DB Driver - Bulk Replace&#39;** |               **1** |  **1.420 ms** | **0.0328 ms** | **0.0306 ms** |  **1.00** |    **0.00** |
+|  &#39;MongoDelta - Replace Strategy&#39; |               1 |  1.586 ms | 0.0129 ms | 0.0108 ms |  1.11 |    0.02 |
+|                                  |                 |           |           |           |       |         |
+| **&#39;Mongo DB Driver - Bulk Replace&#39;** |              **50** |  **4.389 ms** | **0.0442 ms** | **0.0414 ms** |  **1.00** |    **0.00** |
+|  &#39;MongoDelta - Replace Strategy&#39; |              50 |  4.960 ms | 0.0990 ms | 0.0972 ms |  1.13 |    0.03 |
+|                                  |                 |           |           |           |       |         |
+| **&#39;Mongo DB Driver - Bulk Replace&#39;** |             **500** | **29.488 ms** | **0.5826 ms** | **0.4548 ms** |  **1.00** |    **0.00** |
+|  &#39;MongoDelta - Replace Strategy&#39; |             500 | 33.359 ms | 0.4267 ms | 0.3992 ms |  1.13 |    0.02 |
+
+### Update
+
+|                               Method | NumberOfRecords |      Mean |     Error |    StdDev | Ratio | RatioSD |
+|------------------------------------- |---------------- |----------:|----------:|----------:|------:|--------:|
+|      **&#39;Mongo DB Driver - Bulk Update&#39;** |               **1** |  **1.446 ms** | **0.0165 ms** | **0.0129 ms** |  **1.00** |    **0.00** |
+| &#39;MongoDelta - Delta Update Strategy&#39; |               1 |  1.750 ms | 0.0344 ms | 0.0526 ms |  1.23 |    0.04 |
+|                                      |                 |           |           |           |       |         |
+|      **&#39;Mongo DB Driver - Bulk Update&#39;** |              **50** |  **5.651 ms** | **0.1074 ms** | **0.1054 ms** |  **1.00** |    **0.00** |
+| &#39;MongoDelta - Delta Update Strategy&#39; |              50 |  7.778 ms | 0.1115 ms | 0.0989 ms |  1.38 |    0.03 |
+|                                      |                 |           |           |           |       |         |
+|      **&#39;Mongo DB Driver - Bulk Update&#39;** |             **500** | **41.686 ms** | **1.2455 ms** | **1.8642 ms** |  **1.00** |    **0.00** |
+| &#39;MongoDelta - Delta Update Strategy&#39; |             500 | 58.756 ms | 0.8969 ms | 0.7951 ms |  1.41 |    0.07 |

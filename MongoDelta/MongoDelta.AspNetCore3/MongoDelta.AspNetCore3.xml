@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>MongoDelta.AspNetCore3</name>
+    </assembly>
+    <members>
+        <member name="T:MongoDelta.AspNetCore3.StartupExtensions">
+            <summary>
+            Contains extension methods that can be used in the startup of an ASP.NET Core app
+            </summary>
+        </member>
+        <member name="M:MongoDelta.AspNetCore3.StartupExtensions.UseUnitOfWork``1(Microsoft.AspNetCore.Builder.IApplicationBuilder)">
+            <summary>
+            Registers middleware that makes a fresh instance of the unit of work available for each request
+            </summary>
+            <param name="app">The application builder in the Startup class</param>
+            <typeparam name="TUnitOfWork">The type of unit of work to provide</typeparam>
+            <returns>The application builder</returns>
+        </member>
+        <member name="M:MongoDelta.AspNetCore3.StartupExtensions.AddUnitOfWork``2(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers the unit of work with the DI container. This requires the UseUnitOfWork method to be called on the IApplicationBuilder
+            </summary>
+            <param name="services">The services collection for the DI container</param>
+            <typeparam name="TInterface">The interface that will be used to inject the unit of work</typeparam>
+            <typeparam name="TUnitOfWork">The concrete type that is being used by the middleware</typeparam>
+            <returns>The service collection</returns>
+        </member>
+    </members>
+</doc>
