@@ -10,8 +10,7 @@ namespace MongoDelta.ChangeTracking.DirtyTracking
         public static IMemberDirtyTrackerTemplate GetTrackerTemplateForMember(object aggregate, BsonMemberMap map)
         {
             var classMap = BsonClassMap.LookupClassMap(map.MemberType);
-            var updateConfig = classMap.GetDeltaUpdateConfiguration();
-            if (updateConfig.UseDeltaUpdateStrategy)
+            if (classMap.ShouldUseDeltaUpdateStrategy())
             {
                 return new SubObjectDirtyTrackerTemplate(aggregate, map);
             }
