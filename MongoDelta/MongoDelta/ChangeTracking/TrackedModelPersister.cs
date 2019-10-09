@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
@@ -9,46 +10,33 @@ namespace MongoDelta.ChangeTracking
 {
     internal class TrackedModelPersister<T> where T : class
     {
-        public async Task PersistChangesAsync(IMongoCollection<T> collection, TrackedModelCollection<T> trackedModels, IClientSessionHandle existingSession = null)
+        public async Task PersistChangesAsync(IMongoCollection<T> collection,
+            IClientSessionHandle existingSession, IEnumerable<WriteModel<T>> writeModels)
         {
             await ExecuteWithClientSession(collection, existingSession, async session =>
             {
-                await InsertNewModels(collection, session, trackedModels);
-                await DeleteRemovedModels(collection, session, trackedModels);
-                await UpdateChangedModels(collection, session, trackedModels);
+                await collection.BulkWriteAsync(session, writeModels);
             });
         }
 
-        private async Task InsertNewModels(IMongoCollection<T> collection, IClientSessionHandle session, 
-            TrackedModelCollection<T> trackedModels)
+        private IEnumerable<WriteModel<T>> InsertNewModels(TrackedModelCollection<T> trackedModels)
         {
             var newModels = trackedModels.OfState(TrackedModelState.New).Select(m => m.Model).ToArray();
-            if (newModels.Any())
-            {
-                await collection.InsertManyAsync(session, newModels);
-            }
+            return newModels.Select(m => new InsertOneModel<T>(m));
         }
 
-        private async Task DeleteRemovedModels(IMongoCollection<T> collection, IClientSessionHandle session, 
-            TrackedModelCollection<T> trackedModels)
+        private IEnumerable<WriteModel<T>> DeleteRemovedModels(TrackedModelCollection<T> trackedModels)
         {
             var removedModels = trackedModels.OfState(TrackedModelState.Removed).Select(m => m.Model).ToArray();
-            if (removedModels.Any())
-            {
-                await collection.DeleteManyAsync(session, GenericBsonFilters.MatchMultipleById(removedModels));
-            }
+            return removedModels.Select(m => new DeleteOneModel<T>(GenericBsonFilters.MatchSingleById(m)));
         }
 
-        private async Task UpdateChangedModels(IMongoCollection<T> collection, IClientSessionHandle session,
-            TrackedModelCollection<T> trackedModels)
+        private IEnumerable<WriteModel<T>> UpdateChangedModels(TrackedModelCollection<T> trackedModels)
         {
             var updatedModels = trackedModels.OfState(TrackedModelState.Existing).Where(m => m.IsDirty).ToArray();
             var updateStrategy = UpdateStrategy.ForType<T>();
 
-            foreach(var model in updatedModels)
-            {
-                await updateStrategy.Update(session, collection, model);
-            }
+            return updatedModels.Select(m => updateStrategy.GetWriteModelForUpdate(m));
         }
 
         private async Task ExecuteWithClientSession(IMongoCollection<T> collection, IClientSessionHandle session, 
@@ -72,6 +60,13 @@ namespace MongoDelta.ChangeTracking
                     session.Dispose();
                 }
             }
+        }
+
+        public IEnumerable<WriteModel<T>> GetChangesForWrite(TrackedModelCollection<T> trackedModels)
+        {
+            return InsertNewModels(trackedModels)
+                .Concat(DeleteRemovedModels(trackedModels))
+                .Concat(UpdateChangedModels(trackedModels));
         }
     }
 }

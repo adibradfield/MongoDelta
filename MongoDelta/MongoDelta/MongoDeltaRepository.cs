@@ -6,6 +6,7 @@ using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 using MongoDelta.ChangeTracking;
 using MongoDelta.MongoDbHelpers;
+using MongoDelta.UpdateStrategies;
 
 namespace MongoDelta
 {
@@ -15,7 +16,8 @@ namespace MongoDelta
     public abstract class MongoDeltaRepository
     {
         internal MongoDeltaRepository(){}
-        internal abstract Task CommitChangesAsync(IClientSessionHandle session = null);
+        internal abstract Task CommitChangesAsync(IClientSessionHandle session, PreparedWriteModel writeModel);
+        internal abstract PreparedWriteModel PrepareChangesForWrite();
     }
 
     /// <summary>
@@ -119,9 +121,19 @@ namespace MongoDelta
             _trackedModels.Remove(model);
         }
 
-        internal override async Task CommitChangesAsync(IClientSessionHandle session = null)
+        internal override async Task CommitChangesAsync(IClientSessionHandle session,
+            PreparedWriteModel writeModel)
         {
-            await _trackedModelPersister.PersistChangesAsync(_collection, _trackedModels, session);
+            var typedWriteModel = (PreparedWriteModel<T>) writeModel;
+            if (typedWriteModel.HasChanges)
+            {
+                await _trackedModelPersister.PersistChangesAsync(_collection, session, typedWriteModel.MongoWriteModels);
+            }
+        }
+
+        internal override PreparedWriteModel PrepareChangesForWrite()
+        {
+            return new PreparedWriteModel<T>(_trackedModelPersister.GetChangesForWrite(_trackedModels));
         }
     }
 }
