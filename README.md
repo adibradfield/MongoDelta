@@ -17,7 +17,7 @@ There are also extension methods available for integrating your UnitOfWork with 
 - [x] *V1.0* - UnitofWork pattern with change tracking
 - [x] *V1.1* - Integrate with ASP.NET Core for proper dependency injection behavior
 - [x] *V1.2* - Incremental updates for the root document
-- [ ] *V1.3* - Incremental updates for sub-documents and numeric fields
+- [x] *V1.3* - Incremental updates for sub-documents and numeric fields
 - [ ] *V1.4* - Incremental updates for collection fields
 
 ## Getting Started
