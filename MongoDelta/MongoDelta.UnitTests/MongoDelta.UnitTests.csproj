@@ -26,4 +26,8 @@
     <ProjectReference Include="..\MongoDelta\MongoDelta.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Helpers\" />
+  </ItemGroup>
+
 </Project>

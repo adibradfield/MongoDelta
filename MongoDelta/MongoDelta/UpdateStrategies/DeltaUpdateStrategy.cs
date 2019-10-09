@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
@@ -13,11 +12,10 @@ namespace MongoDelta.UpdateStrategies
 {
     internal class DeltaUpdateStrategy<T> : UpdateStrategy<T> where T : class
     {
-        public override async Task Update(IClientSessionHandle session, IMongoCollection<T> collection, TrackedModel<T> trackedModel)
+        public override WriteModel<T> GetWriteModelForUpdate(TrackedModel<T> trackedModel)
         {
             var updateDefinition = GetUpdateDefinitionForObject(trackedModel.DirtyTracker, typeof(T), trackedModel.Model);
-
-            await collection.UpdateOneAsync(session, GenericBsonFilters.MatchSingleById(trackedModel.Model),
+            return new UpdateOneModel<T>(GenericBsonFilters.MatchSingleById(trackedModel.Model), 
                 updateDefinition.ToMongoUpdateDefinition<T>());
         }
 

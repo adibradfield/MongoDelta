@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using MongoDB.Bson.Serialization;
+﻿using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using MongoDelta.ChangeTracking;
 using MongoDelta.Mapping;
@@ -24,6 +23,6 @@ namespace MongoDelta.UpdateStrategies
 
     internal abstract class UpdateStrategy<T> : UpdateStrategy where T : class
     {
-        public abstract Task Update(IClientSessionHandle session, IMongoCollection<T> collection, TrackedModel<T> trackedModel);
+        public abstract WriteModel<T> GetWriteModelForUpdate(TrackedModel<T> trackedModel);
     }
 }

@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDelta.ChangeTracking;
 using MongoDelta.UnitTests.Models;
 using MongoDelta.UpdateStrategies;
-using Moq;
 using NUnit.Framework;
 
 namespace MongoDelta.UnitTests.UpdateStrategies
@@ -17,56 +14,58 @@ namespace MongoDelta.UnitTests.UpdateStrategies
     public class DeltaUpdateStrategyTests
     {
         [Test]
-        public async Task Update_SingleChange_Success()
+        public void Update_SingleChange_Success()
         {
             var expectedUpdateDefinition = new BsonDocument("$set", new BsonDocument("Name", "John Smith"));
-            var session = SetupMongoCollectionForUpdate<FlatAggregate>(expectedUpdateDefinition, out var collection);
             var model = GetTrackedFlatAggregate(out var trackedModel);
 
             model.Name = "John Smith";
 
             var strategy = new DeltaUpdateStrategy<FlatAggregate>();
-            await strategy.Update(session.Object, collection.Object, trackedModel);
+            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
         }
 
         [Test]
-        public async Task Update_TwoChanges_Success()
+        public void Update_TwoChanges_Success()
         {
             var expectedUpdateDefinition = new BsonDocument("$set", new BsonDocument
             {
                 new BsonElement("Age", 25),
                 new BsonElement("Name", "John Smith"),
             });
-            var session = SetupMongoCollectionForUpdate<FlatAggregate>(expectedUpdateDefinition, out var collection);
             var model = GetTrackedFlatAggregate(out var trackedModel);
 
             model.Name = "John Smith";
             model.Age = 25;
 
             var strategy = new DeltaUpdateStrategy<FlatAggregate>();
-            await strategy.Update(session.Object, collection.Object, trackedModel);
+            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
         }
 
         [Test]
-        public async Task Update_NonDeltaSubEntityUpdated_Success()
+        public void Update_NonDeltaSubEntityUpdated_Success()
         {
             var expectedUpdateDefinition = new BsonDocument("$set",
                 new BsonDocument("NonDeltaValue", new BsonDocument("Value", "NewValue")));
-            var session = SetupMongoCollectionForUpdate<SubEntityAsDeltaAggregate>(expectedUpdateDefinition, out var collection);
             var model = GetTrackedSubEntityAggregate(out var trackedModel);
 
             model.NonDeltaValue.Value = "NewValue";
 
             var strategy = new DeltaUpdateStrategy<SubEntityAsDeltaAggregate>();
-            await strategy.Update(session.Object, collection.Object, trackedModel);
+            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
         }
 
         [Test]
-        public async Task Update_NonDeltaSubEntityReplaced_Success()
+        public void Update_NonDeltaSubEntityReplaced_Success()
         {
             var expectedUpdateDefinition = new BsonDocument("$set",
                 new BsonDocument("NonDeltaValue", new BsonDocument("Value", "NewValue")));
-            var session = SetupMongoCollectionForUpdate<SubEntityAsDeltaAggregate>(expectedUpdateDefinition, out var collection);
             var model = GetTrackedSubEntityAggregate(out var trackedModel);
 
             model.NonDeltaValue = new SubEntityAsDeltaAggregate.NonDeltaSubEntity
@@ -75,29 +74,31 @@ namespace MongoDelta.UnitTests.UpdateStrategies
             };
 
             var strategy = new DeltaUpdateStrategy<SubEntityAsDeltaAggregate>();
-            await strategy.Update(session.Object, collection.Object, trackedModel);
+            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
         }
 
         [Test]
-        public async Task Update_DeltaSubEntityUpdated_Success()
+        public void Update_DeltaSubEntityUpdated_Success()
         {
             var expectedUpdateDefinition = new BsonDocument("$set",
                 new BsonDocument("DeltaValue.Value", "NewValue"));
-            var session = SetupMongoCollectionForUpdate<SubEntityAsDeltaAggregate>(expectedUpdateDefinition, out var collection);
             var model = GetTrackedSubEntityAggregate(out var trackedModel);
 
             model.DeltaValue.Value = "NewValue";
 
             var strategy = new DeltaUpdateStrategy<SubEntityAsDeltaAggregate>();
-            await strategy.Update(session.Object, collection.Object, trackedModel);
+            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
         }
 
         [Test]
-        public async Task Update_DeltaSubEntityReplaced_Success()
+        public void Update_DeltaSubEntityReplaced_Success()
         {
             var expectedUpdateDefinition = new BsonDocument("$set",
                 new BsonDocument("DeltaValue.Value", "NewValue"));
-            var session = SetupMongoCollectionForUpdate<SubEntityAsDeltaAggregate>(expectedUpdateDefinition, out var collection);
             var model = GetTrackedSubEntityAggregate(out var trackedModel);
 
             model.DeltaValue = new SubEntityAsDeltaAggregate.DeltaSubEntity
@@ -106,43 +107,46 @@ namespace MongoDelta.UnitTests.UpdateStrategies
             };
 
             var strategy = new DeltaUpdateStrategy<SubEntityAsDeltaAggregate>();
-            await strategy.Update(session.Object, collection.Object, trackedModel);
+            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
         }
 
         [Test]
-        public async Task Update_DeltaSubEntityValueToNull_Success()
+        public void Update_DeltaSubEntityValueToNull_Success()
         {
             var expectedUpdateDefinition = new BsonDocument("$set",
                 new BsonDocument("DeltaValue", BsonNull.Value));
-            var session = SetupMongoCollectionForUpdate<SubEntityAsDeltaAggregate>(expectedUpdateDefinition, out var collection);
             var model = GetTrackedSubEntityAggregate(out var trackedModel);
 
             model.DeltaValue = null;
 
             var strategy = new DeltaUpdateStrategy<SubEntityAsDeltaAggregate>();
-            await strategy.Update(session.Object, collection.Object, trackedModel);
+            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
         }
 
         [Test]
-        public async Task Update_NonDeltaSubEntityValueToNull_Success()
+        public void Update_NonDeltaSubEntityValueToNull_Success()
         {
             var expectedUpdateDefinition = new BsonDocument("$set",
                 new BsonDocument("NonDeltaValue", BsonNull.Value));
-            var session = SetupMongoCollectionForUpdate<SubEntityAsDeltaAggregate>(expectedUpdateDefinition, out var collection);
             var model = GetTrackedSubEntityAggregate(out var trackedModel);
 
             model.NonDeltaValue = null;
 
             var strategy = new DeltaUpdateStrategy<SubEntityAsDeltaAggregate>();
-            await strategy.Update(session.Object, collection.Object, trackedModel);
+            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
         }
 
         [Test]
-        public async Task Update_DeltaSubEntityNullToValue_Success()
+        public void Update_DeltaSubEntityNullToValue_Success()
         {
             var expectedUpdateDefinition = new BsonDocument("$set",
                 new BsonDocument("DeltaValue", new BsonDocument("Value", "NewValue")));
-            var session = SetupMongoCollectionForUpdate<SubEntityAsDeltaAggregate>(expectedUpdateDefinition, out var collection);
             var model = GetNullTrackedSubEntityAggregate(out var trackedModel);
 
             model.DeltaValue = new SubEntityAsDeltaAggregate.DeltaSubEntity
@@ -151,15 +155,16 @@ namespace MongoDelta.UnitTests.UpdateStrategies
             };
 
             var strategy = new DeltaUpdateStrategy<SubEntityAsDeltaAggregate>();
-            await strategy.Update(session.Object, collection.Object, trackedModel);
+            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
         }
 
         [Test]
-        public async Task Update_NonDeltaSubEntityNullToValue_Success()
+        public void Update_NonDeltaSubEntityNullToValue_Success()
         {
             var expectedUpdateDefinition = new BsonDocument("$set",
                 new BsonDocument("NonDeltaValue", new BsonDocument("Value", "NewValue")));
-            var session = SetupMongoCollectionForUpdate<SubEntityAsDeltaAggregate>(expectedUpdateDefinition, out var collection);
             var model = GetNullTrackedSubEntityAggregate(out var trackedModel);
 
             model.NonDeltaValue = new SubEntityAsDeltaAggregate.NonDeltaSubEntity
@@ -168,121 +173,69 @@ namespace MongoDelta.UnitTests.UpdateStrategies
             };
 
             var strategy = new DeltaUpdateStrategy<SubEntityAsDeltaAggregate>();
-            await strategy.Update(session.Object, collection.Object, trackedModel);
+            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
         }
 
         [Test]
-        public async Task Update_IntegerIncrementally_Success()
+        public void Update_IntegerIncrementally_Success()
         {
             var expectedUpdateDefinition = new BsonDocument("$inc",
                 new BsonDocument("Integer", 12));
-            var session = SetupMongoCollectionForUpdate<IncrementNumeralsAggregate>(expectedUpdateDefinition, out var collection);
             var model = GetTrackedIncrementNumeralsAggregate(out var trackedModel);
 
             model.Integer += 12;
 
             var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
-            await strategy.Update(session.Object, collection.Object, trackedModel);
+            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
         }
 
         [Test]
-        public async Task Update_LongIncrementally_Success()
+        public void Update_LongIncrementally_Success()
         {
             var expectedUpdateDefinition = new BsonDocument("$inc",
                 new BsonDocument("Long", 10567));
-            var session = SetupMongoCollectionForUpdate<IncrementNumeralsAggregate>(expectedUpdateDefinition, out var collection);
             var model = GetTrackedIncrementNumeralsAggregate(out var trackedModel);
 
             model.Long += 10567;
 
             var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
-            await strategy.Update(session.Object, collection.Object, trackedModel);
+            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
         }
 
         [Test]
-        public async Task Update_DecimalIncrementally_Success()
+        public void Update_DecimalIncrementally_Success()
         {
             var expectedUpdateDefinition = new BsonDocument("$inc",
                 new BsonDocument("Decimal", 89.4M));
-            var session = SetupMongoCollectionForUpdate<IncrementNumeralsAggregate>(expectedUpdateDefinition, out var collection);
             var model = GetTrackedIncrementNumeralsAggregate(out var trackedModel);
 
             model.Decimal += 89.4M;
 
             var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
-            await strategy.Update(session.Object, collection.Object, trackedModel);
+            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
         }
 
         [Test]
-        public async Task Update_DoubleIncrementally_Success()
+        public void Update_DoubleIncrementally_Success()
         {
             var expectedUpdateDefinition = new BsonDocument("$inc",
                 new BsonDocument("Double", 12.896));
-            var session = SetupMongoCollectionForUpdate<IncrementNumeralsAggregate>(expectedUpdateDefinition, out var collection, 
-                new Dictionary<string, Action<BsonValue, BsonValue>>
-                {
-                    { "$inc.Double", (expected, actual) =>
-                        {
-                            Assert.That(actual.AsDouble, Is.EqualTo(expected.AsDouble).Within(0.0000000001));
-                        }
-                    }
-                });
             var model = GetTrackedIncrementNumeralsAggregate(out var trackedModel);
 
             model.Double += 12.896;
 
             var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
-            await strategy.Update(session.Object, collection.Object, trackedModel);
-        }
+            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
 
-        [Test]
-        public async Task Update_IntegerDecrementally_Success()
-        {
-            var expectedUpdateDefinition = new BsonDocument("$inc",
-                new BsonDocument("Integer", -12));
-            var session = SetupMongoCollectionForUpdate<IncrementNumeralsAggregate>(expectedUpdateDefinition, out var collection);
-            var model = GetTrackedIncrementNumeralsAggregate(out var trackedModel);
-
-            model.Integer -= 12;
-
-            var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
-            await strategy.Update(session.Object, collection.Object, trackedModel);
-        }
-
-        [Test]
-        public async Task Update_LongDecrementally_Success()
-        {
-            var expectedUpdateDefinition = new BsonDocument("$inc",
-                new BsonDocument("Long", -10567));
-            var session = SetupMongoCollectionForUpdate<IncrementNumeralsAggregate>(expectedUpdateDefinition, out var collection);
-            var model = GetTrackedIncrementNumeralsAggregate(out var trackedModel);
-
-            model.Long -= 10567;
-
-            var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
-            await strategy.Update(session.Object, collection.Object, trackedModel);
-        }
-
-        [Test]
-        public async Task Update_DecimalDecrementally_Success()
-        {
-            var expectedUpdateDefinition = new BsonDocument("$inc",
-                new BsonDocument("Decimal", -89.4M));
-            var session = SetupMongoCollectionForUpdate<IncrementNumeralsAggregate>(expectedUpdateDefinition, out var collection);
-            var model = GetTrackedIncrementNumeralsAggregate(out var trackedModel);
-
-            model.Decimal -= 89.4M;
-
-            var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
-            await strategy.Update(session.Object, collection.Object, trackedModel);
-        }
-
-        [Test]
-        public async Task Update_DoubleDecrementally_Success()
-        {
-            var expectedUpdateDefinition = new BsonDocument("$inc",
-                new BsonDocument("Double", -12.896));
-            var session = SetupMongoCollectionForUpdate<IncrementNumeralsAggregate>(expectedUpdateDefinition, out var collection, 
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel, 
                 new Dictionary<string, Action<BsonValue, BsonValue>>
                 {
                     { "$inc.Double", (expected, actual) =>
@@ -291,12 +244,74 @@ namespace MongoDelta.UnitTests.UpdateStrategies
                         }
                     }
                 });
+        }
+
+        [Test]
+        public void Update_IntegerDecrementally_Success()
+        {
+            var expectedUpdateDefinition = new BsonDocument("$inc",
+                new BsonDocument("Integer", -12));
+            var model = GetTrackedIncrementNumeralsAggregate(out var trackedModel);
+
+            model.Integer -= 12;
+
+            var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
+            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+        }
+
+        [Test]
+        public void Update_LongDecrementally_Success()
+        {
+            var expectedUpdateDefinition = new BsonDocument("$inc",
+                new BsonDocument("Long", -10567));
+            var model = GetTrackedIncrementNumeralsAggregate(out var trackedModel);
+
+            model.Long -= 10567;
+
+            var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
+            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+        }
+
+        [Test]
+        public void Update_DecimalDecrementally_Success()
+        {
+            var expectedUpdateDefinition = new BsonDocument("$inc",
+                new BsonDocument("Decimal", -89.4M));
+            var model = GetTrackedIncrementNumeralsAggregate(out var trackedModel);
+
+            model.Decimal -= 89.4M;
+
+            var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
+            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+        }
+
+        [Test]
+        public void Update_DoubleDecrementally_Success()
+        {
+            var expectedUpdateDefinition = new BsonDocument("$inc",
+                new BsonDocument("Double", -12.896));
             var model = GetTrackedIncrementNumeralsAggregate(out var trackedModel);
 
             model.Double -= 12.896;
 
             var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
-            await strategy.Update(session.Object, collection.Object, trackedModel);
+            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel, 
+                new Dictionary<string, Action<BsonValue, BsonValue>>
+                {
+                    { "$inc.Double", (expected, actual) =>
+                        {
+                            Assert.That(actual.AsDouble, Is.EqualTo(expected.AsDouble).Within(0.0000000001));
+                        }
+                    }
+                });
         }
 
         private static FlatAggregate GetTrackedFlatAggregate(out TrackedModel<FlatAggregate> trackedModel)
@@ -368,45 +383,31 @@ namespace MongoDelta.UnitTests.UpdateStrategies
             return model;
         }
 
-        private static Mock<IClientSessionHandle> SetupMongoCollectionForUpdate<T>(BsonDocument expectedUpdateDefinition, out Mock<IMongoCollection<T>> collection, 
-            Dictionary<string, Action<BsonValue, BsonValue>> customAsserts = null)
+        private static void AssertModelEqualsExpectedDefinition<T>(BsonDocument expectedUpdateDefinition,
+            WriteModel<T> writeModel, Dictionary<string, Action<BsonValue, BsonValue>> customAsserts = null)
         {
             if (customAsserts == null)
             {
                 customAsserts = new Dictionary<string, Action<BsonValue, BsonValue>>();
             }
 
-            var session = new Mock<IClientSessionHandle>(MockBehavior.Strict);
+            var updateDefinition = ((UpdateOneModel<T>) writeModel).Update;
+            var actualUpdateDefinition = updateDefinition.ToBsonDocument()["Document"].ToBsonDocument();
 
-            collection = new Mock<IMongoCollection<T>>(MockBehavior.Strict);
-            var updateMethod = collection.Setup(m => m.UpdateOneAsync(session.Object,
-                It.IsAny<FilterDefinition<T>>(), It.IsAny<UpdateDefinition<T>>(),
-                It.IsAny<UpdateOptions>(), It.IsAny<CancellationToken>()));
-
-            updateMethod.Callback((IClientSessionHandle clientSession, FilterDefinition<T> filter,
-                UpdateDefinition<T> updateDefinition, UpdateOptions options,
-                CancellationToken cancellationToken) =>
+            foreach (var customAssert in customAsserts)
             {
-                var actualUpdateDefinition = updateDefinition.ToBsonDocument()["Document"].ToBsonDocument();
+                PopValueFromExpectedAndActualDocuments(expectedUpdateDefinition, actualUpdateDefinition, customAssert.Key, out var expectedValue, out var actualValue);
+                customAssert.Value(expectedValue, actualValue);
+            }
 
-                foreach (var customAssert in customAsserts)
-                {
-                    PopValueFromExpectedAndActualDocuments(expectedUpdateDefinition, actualUpdateDefinition, customAssert.Key, out var expectedValue, out var actualValue);
-                    customAssert.Value(expectedValue, actualValue);
-                }
+            var expectedKeys = expectedUpdateDefinition.Elements.Select(e => e.Name).ToArray();
+            var actualKeys = actualUpdateDefinition.Elements.Select(e => e.Name).ToArray();
+            CollectionAssert.AreEquivalent(expectedKeys, actualKeys);
 
-                var expectedKeys = expectedUpdateDefinition.Elements.Select(e => e.Name).ToArray();
-                var actualKeys = actualUpdateDefinition.Elements.Select(e => e.Name).ToArray();
-                CollectionAssert.AreEquivalent(expectedKeys, actualKeys);
-
-                foreach (var key in actualKeys)
-                {
-                    CollectionAssert.AreEquivalent(expectedUpdateDefinition[key].AsBsonDocument, actualUpdateDefinition[key].AsBsonDocument);
-                }
-            });
-
-            updateMethod.Returns(Task.FromResult<UpdateResult>(new UpdateResult.Acknowledged(1, 1, null)));
-            return session;
+            foreach (var key in actualKeys)
+            {
+                CollectionAssert.AreEquivalent(expectedUpdateDefinition[key].AsBsonDocument, actualUpdateDefinition[key].AsBsonDocument);
+            }
         }
 
         private static void PopValueFromExpectedAndActualDocuments(BsonDocument expectedUpdateDefinition,

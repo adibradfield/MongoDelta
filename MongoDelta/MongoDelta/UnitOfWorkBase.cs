@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MongoDB.Driver;
+using MongoDelta.UpdateStrategies;
 
 namespace MongoDelta
 {
@@ -63,9 +64,16 @@ namespace MongoDelta
                 if(_useTransactions) session.StartTransaction();
                 try
                 {
+                    var preparedChanges = new Dictionary<MongoDeltaRepository, PreparedWriteModel>();
+
                     foreach (var repository in _repositories.Values)
                     {
-                        await repository.CommitChangesAsync(session);
+                        preparedChanges.Add(repository, repository.PrepareChangesForWrite());
+                    }
+
+                    foreach (var repository in _repositories.Values)
+                    {
+                        await repository.CommitChangesAsync(session, preparedChanges[repository]);
                     }
 
                     if(_useTransactions) await session.CommitTransactionAsync();
