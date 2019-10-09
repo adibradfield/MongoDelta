@@ -11,8 +11,7 @@ namespace MongoDelta.UpdateStrategies
         public static UpdateStrategy<T> ForType<T>() where T : class
         {
             var classMap = BsonClassMap.LookupClassMap(typeof(T));
-            var updateConfig = classMap.GetDeltaUpdateConfiguration();
-            if (updateConfig.UseDeltaUpdateStrategy)
+            if (classMap.ShouldUseDeltaUpdateStrategy())
             {
                 return new DeltaUpdateStrategy<T>();
             }

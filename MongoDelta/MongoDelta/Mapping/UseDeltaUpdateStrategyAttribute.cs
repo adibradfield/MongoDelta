@@ -3,7 +3,7 @@ using MongoDB.Bson.Serialization;
 
 namespace MongoDelta.Mapping
 {
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Class)]
     public class UseDeltaUpdateStrategyAttribute : Attribute, IBsonClassMapAttribute
     {
         public void Apply(BsonClassMap classMap)

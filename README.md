@@ -145,6 +145,37 @@ When doing this, the model will be updated using an UpdateOne command rather tha
 
 To update only changed properties on sub-objects, you need to make sure that the sub-objects type is also mapped to use the delta update strategy.
 
+### Update numeric fields incrementally
+It's possible to update numeric properties incrementally. To be able to do this, the property must be serializable to one of the BSON types: Int32, Int64, Double or Decimal128.
+The class that contains the property must also use the delta update strategy. To map a property to be updated incrementally, you can do this in code by calling the `UpdateIncrementally` on the member map:
+```cs
+BsonClassMap.RegisterClassMap<IncrementNumeralsAggregate>(map =>
+{
+	map.UseDeltaUpdateStrategy();
+	map.MapProperty(m => m.Integer).UpdateIncrementally();
+});
+```
+Or alternatively you can use attributes:
+```cs
+[UseDeltaUpdateStrategy]
+class IncrementalUpdateAggregate
+{
+	public Guid Id { get; set; }
+
+	[UpdateIncrementally]
+	public int Integer { get; set; }
+
+	[UpdateIncrementally]
+	public long Long { get; set; }
+
+	[UpdateIncrementally]
+	[BsonRepresentation(BsonType.Decimal128)]
+	public decimal Decimal { get; set; }
+}
+```
+
+As you can see from the above example, to be able to incrementally update a decimal, you need to explicitly tell MongoDB to serialize it as the Decimal128 type.
+This is due to decimals being serialised as a string by default.
 
 ### Integration with ASP.NET Core 3
 First you will need to intall this library from [Nuget](https://www.nuget.org/packages/MongoDelta.AspNetCore3/) into your application. This library provides a couple of extension methods to use when configuring your web application. `IApplicationBuilder.UseUnitOfWork` adds middleware to your application pipeline which creates a new instance of your UnitOfWork class for every request, whereas the `IServiceCollection.AddUnitOfWork` sets up the dependency injection to allow you to get the correct instance of your UnitOfWork when injecting it. These methods can be used like this:

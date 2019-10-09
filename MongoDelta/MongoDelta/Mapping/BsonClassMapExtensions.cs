@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using MongoDB.Bson.Serialization;
 
@@ -11,20 +12,31 @@ namespace MongoDelta.Mapping
         private static readonly Dictionary<Type, DeltaUpdateConfiguration> UpdateConfigurations =
             new Dictionary<Type, DeltaUpdateConfiguration>();
 
-        public static void UseDeltaUpdateStrategy(this BsonClassMap classMap)
+        public static BsonClassMap UseDeltaUpdateStrategy(this BsonClassMap classMap)
         {
-            ConfigLock.EnterWriteLock();
-            try
-            {
-                UpdateConfigurations.Add(classMap.ClassType, new DeltaUpdateConfiguration {UseDeltaUpdateStrategy = true});
-            }
-            finally
-            {
-                ConfigLock.ExitWriteLock();
-            }
+            ChangeConfigWithWriteLock(classMap, config => config.EnableDeltaUpdateStrategy());
+            return classMap;
         }
 
-        internal static DeltaUpdateConfiguration GetDeltaUpdateConfiguration(this BsonClassMap classMap)
+        internal static bool ShouldUseDeltaUpdateStrategy(this BsonClassMap classMap)
+        {
+            return GetConfigValueWithReadLock(classMap, config => config.UseDeltaUpdateStrategy);
+        }
+
+        public static BsonMemberMap UpdateIncrementally(this BsonMemberMap memberMap)
+        {
+            ChangeConfigWithWriteLock(memberMap.ClassMap,
+                config => config.EnableIncrementalUpdateForElement(memberMap.ElementName));
+            return memberMap;
+        }
+
+        internal static bool ShouldUpdateIncrementally(this BsonClassMap classMap, string elementName)
+        {
+            return GetConfigValueWithReadLock(classMap,
+                config => config.ElementsToIncrementallyUpdate.Contains(elementName));
+        }
+
+        private static DeltaUpdateConfiguration GetDeltaUpdateConfiguration(this BsonClassMap classMap)
         {
             ConfigLock.EnterReadLock();
             try
@@ -42,13 +54,44 @@ namespace MongoDelta.Mapping
             ConfigLock.EnterWriteLock();
             try
             {
-                var config = new DeltaUpdateConfiguration {UseDeltaUpdateStrategy = false};
+                var config = new DeltaUpdateConfiguration();
                 UpdateConfigurations.Add(classMap.ClassType, config);
                 return config;
             }
             finally
             {
                 ConfigLock.ExitWriteLock();
+            }
+        }
+
+        private static void ChangeConfigWithWriteLock(BsonClassMap classMap, Action<DeltaUpdateConfiguration> action)
+        {
+            var config = GetDeltaUpdateConfiguration(classMap);
+
+            ConfigLock.EnterWriteLock();
+            try
+            {
+                action(config);
+            }
+            finally
+            {
+                ConfigLock.ExitWriteLock();
+            }
+        }
+
+        private static T GetConfigValueWithReadLock<T>(BsonClassMap classMap,
+            Func<DeltaUpdateConfiguration, T> expression)
+        {
+            var config = GetDeltaUpdateConfiguration(classMap);
+
+            ConfigLock.EnterReadLock();
+            try
+            {
+                return expression(config);
+            }
+            finally
+            {
+                ConfigLock.ExitReadLock();
             }
         }
     }

@@ -100,6 +100,29 @@ namespace MongoDelta.IntegrationTests
             Assert.AreEqual("New Address", updatedCustomer.DefaultAddresses.InvoiceAddress.HouseName);
         }
 
+        [Test]
+        public async Task UpdateFieldsIncrementally_Success()
+        {
+            var createdModel = new IncrementalUpdateAggregate();
+            var createUnitOfWork =  new IncrementalUpdateUnitOfWork(Database, CollectionName);
+            createUnitOfWork.Models.Add(createdModel);
+            await createUnitOfWork.CommitAsync();
+
+            var updateUnitOfWork = new IncrementalUpdateUnitOfWork(Database, CollectionName);
+            var updateModel = await updateUnitOfWork.Models.QuerySingleAsync(m => m.Id == createdModel.Id);
+            updateModel.Integer += 5;
+            updateModel.Decimal += 10.2M;
+            updateModel.Long += 20;
+            updateModel.Name = "NewName";
+            await updateUnitOfWork.CommitAsync();
+
+            var updatedModel = await updateUnitOfWork.Models.QuerySingleAsync(m => m.Id == createdModel.Id);
+            Assert.AreEqual(updateModel.Integer, updatedModel.Integer);
+            Assert.AreEqual(updateModel.Decimal, updatedModel.Decimal);
+            Assert.AreEqual(updateModel.Long, updatedModel.Long);
+            Assert.AreEqual("NewName", updatedModel.Name);
+        }
+
         private async Task<CustomerAggregate> CreateExistingCustomerAggregate()
         {
             var createUnitOfWork = new CustomerUnitOfWork(Database, CollectionName);
