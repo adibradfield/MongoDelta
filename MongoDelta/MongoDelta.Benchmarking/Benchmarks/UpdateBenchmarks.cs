@@ -10,7 +10,7 @@ namespace MongoDelta.Benchmarking.Benchmarks
 {
     public class UpdateBenchmarks
     {
-        [Params(1, 10, 50, 150, 500)]
+        [Params(1, 50, 500)]
         public int NumberOfRecords { get; set; }
 
         private IMongoClient _client;
@@ -48,22 +48,6 @@ namespace MongoDelta.Benchmarking.Benchmarks
 
         #endregion
 
-        [Benchmark(Description = "Mongo DB Driver - UpdateOne")]
-        public async Task MongoDbDriver_UpdateOne()
-        {
-            var collection = _database.GetCollection<DeltaUserModel>(_collectionName);
-            var records = collection.AsQueryable().Take(NumberOfRecords);
-            foreach (var record in records)
-            {
-                var filter = new FilterDefinitionBuilder<DeltaUserModel>().Eq(user => user.Id, record.Id);
-                var updateDefinition = new UpdateDefinitionBuilder<DeltaUserModel>()
-                    .Set(user => user.DisplayName, Guid.NewGuid().ToString())
-                    .Set(user => user.EmailAddress.EmailAddress, Guid.NewGuid().ToString())
-                    .Set(user => user.EmailAddress.Verified, record.EmailAddress.Verified);
-                await collection.UpdateOneAsync(filter, updateDefinition);
-            }
-        }
-
         [Benchmark(Description = "Mongo DB Driver - Bulk Update", Baseline = true)]
         public async Task MongoDbDriver_BulkUpdate()
         {
@@ -84,7 +68,7 @@ namespace MongoDelta.Benchmarking.Benchmarks
             await collection.BulkWriteAsync(writeModels);
         }
 
-        [Benchmark(Description = "MongoDelta - Replace Strategy")]
+        [Benchmark(Description = "MongoDelta - Delta Update Strategy")]
         public async Task MongoDelta_ReplaceStrategy()
         {
             var unitOfWork = new UserUnitOfWork(_database, _collectionName);

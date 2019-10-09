@@ -10,7 +10,7 @@ namespace MongoDelta.Benchmarking.Benchmarks
 {
     public class ReplaceBenchmarks
     {
-        [Params(1, 10, 50, 150, 500)]
+        [Params(1, 50, 500)]
         public int NumberOfRecords { get; set; }
 
         private IMongoClient _client;
@@ -47,19 +47,6 @@ namespace MongoDelta.Benchmarking.Benchmarks
         }
 
         #endregion
-
-        [Benchmark(Description = "Mongo DB Driver - ReplaceOne")]
-        public async Task MongoDbDriver_ReplaceOne()
-        {
-            var collection = _database.GetCollection<UserModel>(_collectionName);
-            var records = collection.AsQueryable().Take(NumberOfRecords);
-            foreach (var record in records)
-            {
-                ModifyUserRecord(record);
-                var filter = new FilterDefinitionBuilder<UserModel>().Eq(user => user.Id, record.Id);
-                await collection.ReplaceOneAsync(filter, record);
-            }
-        }
 
         [Benchmark(Description = "Mongo DB Driver - Bulk Replace", Baseline = true)]
         public async Task MongoDbDriver_BulkReplace()

@@ -9,7 +9,7 @@ namespace MongoDelta.Benchmarking.Benchmarks
 {
     public class InsertBenchmarks
     {
-        [Params(1, 10, 50, 150, 500)]
+        [Params(1, 50, 500)]
         public int NumberOfRecords { get; set; }
 
         private IMongoClient _client;
@@ -33,20 +33,6 @@ namespace MongoDelta.Benchmarking.Benchmarks
         }
 
         #endregion
-
-        [Benchmark(Description = "Mongo DB Driver - InsertOne")]
-        public async Task MongoDbDriver_IterativeInsertOne()
-        {
-            var collectionName = Guid.NewGuid().ToString();
-            var collection = _database.GetCollection<UserModel>(collectionName);
-
-            for (var i = 0; i < NumberOfRecords; i++)
-            {
-                await collection.InsertOneAsync(new UserModel());
-            }
-
-            await _database.DropCollectionAsync(collectionName);
-        }
 
         [Benchmark(Description = "Mongo DB Driver - InsertMany", Baseline = true)]
         public async Task MongoDbDriver_IterativeInsertMany()
