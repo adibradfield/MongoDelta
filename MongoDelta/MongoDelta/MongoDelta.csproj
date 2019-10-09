@@ -11,6 +11,10 @@
     <Description>Provides a UnitOfWork base class with change tracking to use with MongoDb</Description>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>C:\Users\adria\source\repos\adibradfield\MongoDelta\MongoDelta\MongoDelta\MongoDelta.xml</DocumentationFile>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="MongoDB.Driver" Version="2.9.1" />
   </ItemGroup>

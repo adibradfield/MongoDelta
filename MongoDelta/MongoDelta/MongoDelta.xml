@@ -1,0 +1,128 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>MongoDelta</name>
+    </assembly>
+    <members>
+        <member name="T:MongoDelta.Mapping.BsonClassMapExtensions">
+            <summary>
+            Contains extension methods to use whilst created a BsonClassMap
+            </summary>
+        </member>
+        <member name="M:MongoDelta.Mapping.BsonClassMapExtensions.UseDeltaUpdateStrategy(MongoDB.Bson.Serialization.BsonClassMap)">
+            <summary>
+            When an item of this type is updated, mapped members should only be updated if they have changed
+            </summary>
+            <param name="classMap">The class map for the item type</param>
+            <returns>The class map</returns>
+        </member>
+        <member name="M:MongoDelta.Mapping.BsonClassMapExtensions.UpdateIncrementally(MongoDB.Bson.Serialization.BsonMemberMap)">
+            <summary>
+            Specifies that the member should be updated incrementally. Only valid for members that serialize to the
+            BSON types: Int32, Int64, Double or Decimal128
+            </summary>
+            <param name="memberMap">The map for the member to update incrementally</param>
+            <returns>The member map</returns>
+        </member>
+        <member name="T:MongoDelta.Mapping.UpdateIncrementallyAttribute">
+            <summary>
+            Specifies that the member should be updated incrementally. Only valid for members that serialize to the
+            BSON types: Int32, Int64, Double or Decimal128
+            </summary>
+        </member>
+        <member name="M:MongoDelta.Mapping.UpdateIncrementallyAttribute.Apply(MongoDB.Bson.Serialization.BsonMemberMap)">
+            <inheritdoc />
+        </member>
+        <member name="T:MongoDelta.Mapping.UseDeltaUpdateStrategyAttribute">
+            <summary>
+            When an item of this type is updated, mapped members should only be updated if they have changed
+            </summary>
+        </member>
+        <member name="M:MongoDelta.Mapping.UseDeltaUpdateStrategyAttribute.Apply(MongoDB.Bson.Serialization.BsonClassMap)">
+            <inheritdoc />
+        </member>
+        <member name="T:MongoDelta.MongoDeltaRepository">
+            <summary>
+            The abstract base class for MongoDeltaRepository instances
+            </summary>
+        </member>
+        <member name="T:MongoDelta.MongoDeltaRepository`1">
+            <summary>
+            Provides methods for retrieving and modifying the items in the MongoDB collection
+            </summary>
+            <typeparam name="T">The type to use for the collection</typeparam>
+        </member>
+        <member name="M:MongoDelta.MongoDeltaRepository`1.QueryAsync(System.Func{MongoDB.Driver.Linq.IMongoQueryable{`0},MongoDB.Driver.Linq.IMongoQueryable{`0}})">
+            <summary>
+            Queries multiple items from the collection
+            </summary>
+            <param name="query">The function to apply on the IMongoQueryable instance to get the desired results</param>
+            <returns>The items that match the query</returns>
+        </member>
+        <member name="M:MongoDelta.MongoDeltaRepository`1.QuerySingleAsync(System.Func{MongoDB.Driver.Linq.IMongoQueryable{`0},MongoDB.Driver.Linq.IMongoQueryable{`0}})">
+            <summary>
+            Queries a single item from the collection. Throws an exception if there are multiple matching items
+            </summary>
+            <param name="query">The function to apply on the IMongoQueryable instance to get the desired results</param>
+            <returns>A single item that matches the query</returns>
+        </member>
+        <member name="M:MongoDelta.MongoDeltaRepository`1.QueryAsync(System.Linq.Expressions.Expression{System.Func{`0,System.Boolean}})">
+            <summary>
+            Queries multiple items from the collection
+            </summary>
+            <param name="filter">The filter for the items</param>
+            <returns>The items that match the query</returns>
+        </member>
+        <member name="M:MongoDelta.MongoDeltaRepository`1.QuerySingleAsync(System.Linq.Expressions.Expression{System.Func{`0,System.Boolean}})">
+            <summary>
+            Queries a single item from the collection. Throws an exception if there are multiple matching items
+            </summary>
+            <param name="filter">The filter for the items</param>
+            <returns>A single item that matches the query</returns>
+        </member>
+        <member name="M:MongoDelta.MongoDeltaRepository`1.Add(`0)">
+            <summary>
+            Adds a new item to the collection
+            </summary>
+            <param name="model">The item to add</param>
+        </member>
+        <member name="M:MongoDelta.MongoDeltaRepository`1.Remove(`0)">
+            <summary>
+            Removes an item from the collection
+            </summary>
+            <param name="model">The model to remove</param>
+        </member>
+        <member name="T:MongoDelta.UnitOfWorkBase">
+            <summary>
+            An abstract base class for a UnitOfWork
+            </summary>
+        </member>
+        <member name="M:MongoDelta.UnitOfWorkBase.#ctor(MongoDB.Driver.IMongoDatabase,System.Boolean)">
+            <summary>
+            Constructor for the base class
+            </summary>
+            <param name="database">An instance of the MongoDatabase to connect to</param>
+            <param name="useTransactions">Set to true to use multi-document transactions</param>
+        </member>
+        <member name="M:MongoDelta.UnitOfWorkBase.RegisterRepository``1(System.String)">
+            <summary>
+            Creates a repository and links it to a collection
+            </summary>
+            <param name="collectionName">The name of the collection to link to</param>
+            <typeparam name="TAggregate">The type of model to use for the collection</typeparam>
+        </member>
+        <member name="M:MongoDelta.UnitOfWorkBase.GetRepository``1">
+            <summary>
+            Gets a repository that has previously been registered
+            </summary>
+            <typeparam name="TAggregate">The type of model to get a repository for</typeparam>
+            <returns>The repository</returns>
+        </member>
+        <member name="M:MongoDelta.UnitOfWorkBase.CommitAsync">
+            <summary>
+            Commits changes on all repositories that have been registered
+            </summary>
+            <returns>void</returns>
+        </member>
+    </members>
+</doc>
