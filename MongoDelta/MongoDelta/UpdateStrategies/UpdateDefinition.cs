@@ -6,13 +6,26 @@ using MongoDB.Driver;
 
 namespace MongoDelta.UpdateStrategies
 {
-    class DeltaUpdateDefinition
+    class UpdateDefinition
     {
+        public static UpdateDefinition Replace(object model) => new UpdateDefinition(true, model);
+        public static UpdateDefinition Delta => new UpdateDefinition(false);
+
+        private UpdateDefinition(bool alwaysReplace, object model = null)
+        {
+            _alwaysReplace = alwaysReplace;
+            _model = model;
+        }
+
+        private readonly bool _alwaysReplace;
+        private readonly object _model;
         private readonly Dictionary<string, ElementUpdate> _elementsToReplace = new Dictionary<string, ElementUpdate>();
         public IReadOnlyCollection<ElementUpdate> ElementsToReplace => Array.AsReadOnly(_elementsToReplace.Values.ToArray());
 
         private readonly Dictionary<string, ElementIncrement> _elementsToIncrement = new Dictionary<string, ElementIncrement>();
         public IReadOnlyCollection<ElementIncrement> ElementsToIncrement => Array.AsReadOnly(_elementsToIncrement.Values.ToArray());
+
+        public bool HasChanges => _alwaysReplace && _model != null? true : (ElementsToReplace.Any() || ElementsToIncrement.Any());
 
         public void Set(string elementName, BsonValue value)
         {
@@ -24,15 +37,15 @@ namespace MongoDelta.UpdateStrategies
             _elementsToIncrement.Add(elementName, new ElementIncrement(elementName, incrementBy));
         }
 
-        public void Merge(string elementNamePrefix, DeltaUpdateDefinition deltaUpdateDefinition)
+        public void Merge(string elementNamePrefix, UpdateDefinition updateDefinition)
         {
-            foreach (var elementUpdate in deltaUpdateDefinition.ElementsToReplace)
+            foreach (var elementUpdate in updateDefinition.ElementsToReplace)
             {
                 var newElementName = GetElementNameWithPrefix(elementNamePrefix, elementUpdate.ElementName);
                 Set(newElementName, elementUpdate.NewValue);
             }
 
-            foreach (var elementIncrement in deltaUpdateDefinition.ElementsToIncrement)
+            foreach (var elementIncrement in updateDefinition.ElementsToIncrement)
             {
                 var newElementName = GetElementNameWithPrefix(elementNamePrefix, elementIncrement.ElementName);
                 Increment(newElementName, elementIncrement.IncrementBy);
@@ -44,8 +57,13 @@ namespace MongoDelta.UpdateStrategies
             return prefix + "." + originalName;
         }
 
-        public BsonDocumentUpdateDefinition<T> ToMongoUpdateDefinition<T>()
+        public WriteModel<T> ToMongoWriteModel<T>(FilterDefinition<T> filter)
         {
+            if (_alwaysReplace)
+            {
+                return new ReplaceOneModel<T>(filter, (T)_model);
+            }
+
             var replaceUpdateDefinitions =
                 new BsonDocument(ElementsToReplace.Select(e => new BsonElement(e.ElementName, e.NewValue)));
 
@@ -61,10 +79,9 @@ namespace MongoDelta.UpdateStrategies
             if (incrementUpdateDefinitions.Any())
             {
                 mongoUpdateDefinition.Add("$inc", incrementUpdateDefinitions);
-
             }
 
-            return new BsonDocumentUpdateDefinition<T>(mongoUpdateDefinition);
+            return new UpdateOneModel<T>(filter, mongoUpdateDefinition);
         }
 
         public class ElementUpdate

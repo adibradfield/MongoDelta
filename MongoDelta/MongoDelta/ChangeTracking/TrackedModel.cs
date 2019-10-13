@@ -1,5 +1,5 @@
 ﻿using System;
-using MongoDelta.ChangeTracking.DirtyTracking;
+using MongoDB.Bson;
 
 namespace MongoDelta.ChangeTracking
 {
@@ -12,26 +12,24 @@ namespace MongoDelta.ChangeTracking
 
     internal class TrackedModel<T> where T :class
     {
-        private readonly AggregateDirtyTracker<T> _dirtyTracker;
-
         public static TrackedModel<T> New(T model) => new TrackedModel<T>(model, TrackedModelState.New);
         public static TrackedModel<T> Existing(T model) => new TrackedModel<T>(model, TrackedModelState.Existing);
-        public bool IsDirty => _dirtyTracker.IsDirty;
 
-        private TrackedModel(T model, TrackedModelState state, AggregateDirtyTracker<T> dirtyTracker = null)
+        private TrackedModel(T model, TrackedModelState state)
         {
             Model = model ?? throw new ArgumentNullException(nameof(model));
             State = state;
-            _dirtyTracker = dirtyTracker ?? new AggregateDirtyTracker<T>(model);
+            OriginalDocument = CurrentDocument;
         }
 
         public TrackedModelState State { get; }
         public T Model { get; }
-        public IObjectDirtyTracker DirtyTracker => _dirtyTracker;
+        public BsonDocument OriginalDocument { get; }
+        public BsonDocument CurrentDocument => Model.ToBsonDocument();
 
         public TrackedModel<T> WithNewState(TrackedModelState newState)
         {
-            return new TrackedModel<T>(Model, newState, _dirtyTracker);
+            return new TrackedModel<T>(Model, newState);
         }
     }
 }
