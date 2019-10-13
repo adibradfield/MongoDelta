@@ -4,7 +4,7 @@ parameters:
 steps:
 - task: DotNetCoreInstaller@0
   inputs:
-    version: '3.0.100-rc1-014190'
+    version: '3.0.100'
   displayName: 'Install DotNet Core'
 
 - task: NuGetToolInstaller@1
