@@ -5,45 +5,32 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDelta.ChangeTracking;
 using MongoDelta.UnitTests.Models;
-using MongoDelta.UpdateStrategies;
 using NUnit.Framework;
 
 namespace MongoDelta.UnitTests.UpdateStrategies
 {
     [TestFixture]
-    public class DeltaUpdateStrategyTests
+    public class DocumentChangeTrackerTests
     {
         [Test]
         public void Update_SingleChange_Success()
         {
-            var expectedUpdateDefinition = new BsonDocument("$set", new BsonDocument("Name", "John Smith"));
             var model = GetTrackedFlatAggregate(out var trackedModel);
 
             model.Name = "John Smith";
 
-            var strategy = new DeltaUpdateStrategy<FlatAggregate>();
-            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
-
-            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+            AssertModelIsReplaced(trackedModel);
         }
 
         [Test]
         public void Update_TwoChanges_Success()
         {
-            var expectedUpdateDefinition = new BsonDocument("$set", new BsonDocument
-            {
-                new BsonElement("Age", 25),
-                new BsonElement("Name", "John Smith"),
-            });
             var model = GetTrackedFlatAggregate(out var trackedModel);
 
             model.Name = "John Smith";
             model.Age = 25;
 
-            var strategy = new DeltaUpdateStrategy<FlatAggregate>();
-            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
-
-            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+            AssertModelIsReplaced(trackedModel);
         }
 
         [Test]
@@ -55,10 +42,7 @@ namespace MongoDelta.UnitTests.UpdateStrategies
 
             model.NonDeltaValue.Value = "NewValue";
 
-            var strategy = new DeltaUpdateStrategy<SubEntityAsDeltaAggregate>();
-            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
-
-            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel);
         }
 
         [Test]
@@ -73,10 +57,7 @@ namespace MongoDelta.UnitTests.UpdateStrategies
                 Value = "NewValue"
             };
 
-            var strategy = new DeltaUpdateStrategy<SubEntityAsDeltaAggregate>();
-            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
-
-            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel);
         }
 
         [Test]
@@ -88,10 +69,7 @@ namespace MongoDelta.UnitTests.UpdateStrategies
 
             model.DeltaValue.Value = "NewValue";
 
-            var strategy = new DeltaUpdateStrategy<SubEntityAsDeltaAggregate>();
-            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
-
-            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel);
         }
 
         [Test]
@@ -106,10 +84,7 @@ namespace MongoDelta.UnitTests.UpdateStrategies
                 Value = "NewValue"
             };
 
-            var strategy = new DeltaUpdateStrategy<SubEntityAsDeltaAggregate>();
-            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
-
-            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel);
         }
 
         [Test]
@@ -121,10 +96,7 @@ namespace MongoDelta.UnitTests.UpdateStrategies
 
             model.DeltaValue = null;
 
-            var strategy = new DeltaUpdateStrategy<SubEntityAsDeltaAggregate>();
-            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
-
-            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel);
         }
 
         [Test]
@@ -136,10 +108,7 @@ namespace MongoDelta.UnitTests.UpdateStrategies
 
             model.NonDeltaValue = null;
 
-            var strategy = new DeltaUpdateStrategy<SubEntityAsDeltaAggregate>();
-            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
-
-            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel);
         }
 
         [Test]
@@ -154,10 +123,7 @@ namespace MongoDelta.UnitTests.UpdateStrategies
                 Value = "NewValue"
             };
 
-            var strategy = new DeltaUpdateStrategy<SubEntityAsDeltaAggregate>();
-            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
-
-            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel);
         }
 
         [Test]
@@ -172,10 +138,7 @@ namespace MongoDelta.UnitTests.UpdateStrategies
                 Value = "NewValue"
             };
 
-            var strategy = new DeltaUpdateStrategy<SubEntityAsDeltaAggregate>();
-            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
-
-            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel);
         }
 
         [Test]
@@ -187,10 +150,7 @@ namespace MongoDelta.UnitTests.UpdateStrategies
 
             model.Integer += 12;
 
-            var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
-            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
-
-            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel);
         }
 
         [Test]
@@ -202,10 +162,7 @@ namespace MongoDelta.UnitTests.UpdateStrategies
 
             model.Long += 10567;
 
-            var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
-            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
-
-            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel);
         }
 
         [Test]
@@ -217,10 +174,7 @@ namespace MongoDelta.UnitTests.UpdateStrategies
 
             model.Decimal += 89.4M;
 
-            var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
-            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
-
-            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel);
         }
 
         [Test]
@@ -232,10 +186,7 @@ namespace MongoDelta.UnitTests.UpdateStrategies
 
             model.Double += 12.896;
 
-            var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
-            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
-
-            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel, 
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel, 
                 new Dictionary<string, Action<BsonValue, BsonValue>>
                 {
                     { "$inc.Double", (expected, actual) =>
@@ -255,10 +206,7 @@ namespace MongoDelta.UnitTests.UpdateStrategies
 
             model.Integer -= 12;
 
-            var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
-            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
-
-            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel);
         }
 
         [Test]
@@ -270,10 +218,7 @@ namespace MongoDelta.UnitTests.UpdateStrategies
 
             model.Long -= 10567;
 
-            var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
-            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
-
-            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel);
         }
 
         [Test]
@@ -285,10 +230,7 @@ namespace MongoDelta.UnitTests.UpdateStrategies
 
             model.Decimal -= 89.4M;
 
-            var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
-            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
-
-            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel);
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel);
         }
 
         [Test]
@@ -300,10 +242,7 @@ namespace MongoDelta.UnitTests.UpdateStrategies
 
             model.Double -= 12.896;
 
-            var strategy = new DeltaUpdateStrategy<IncrementNumeralsAggregate>();
-            var writeModel = strategy.GetWriteModelForUpdate(trackedModel);
-
-            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, writeModel, 
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel, 
                 new Dictionary<string, Action<BsonValue, BsonValue>>
                 {
                     { "$inc.Double", (expected, actual) =>
@@ -383,16 +322,28 @@ namespace MongoDelta.UnitTests.UpdateStrategies
             return model;
         }
 
+        private static void AssertModelIsReplaced(TrackedModel<FlatAggregate> trackedModel)
+        {
+            var changeTracker = new DocumentChangeTracker(typeof(FlatAggregate));
+            var updateDefinition = changeTracker.GetUpdatesForChanges(trackedModel.OriginalDocument, trackedModel.CurrentDocument);
+            var writeModel = (ReplaceOneModel<FlatAggregate>) updateDefinition.ToMongoWriteModel(FilterDefinition<FlatAggregate>.Empty);
+
+            Assert.AreEqual(trackedModel.Model.Id, writeModel.Replacement.Id);
+        }
+
         private static void AssertModelEqualsExpectedDefinition<T>(BsonDocument expectedUpdateDefinition,
-            WriteModel<T> writeModel, Dictionary<string, Action<BsonValue, BsonValue>> customAsserts = null)
+            TrackedModel<T> trackedModel, Dictionary<string, Action<BsonValue, BsonValue>> customAsserts = null) where T : class
         {
             if (customAsserts == null)
             {
                 customAsserts = new Dictionary<string, Action<BsonValue, BsonValue>>();
             }
 
-            var updateDefinition = ((UpdateOneModel<T>) writeModel).Update;
-            var actualUpdateDefinition = updateDefinition.ToBsonDocument()["Document"].ToBsonDocument();
+            var changeTracker = new DocumentChangeTracker(typeof(T));
+            var updateDefinition = changeTracker.GetUpdatesForChanges(trackedModel.OriginalDocument, trackedModel.CurrentDocument);
+            var writeModel = (UpdateOneModel<T>) updateDefinition.ToMongoWriteModel(FilterDefinition<T>.Empty);
+
+            var actualUpdateDefinition = writeModel.Update.ToBsonDocument()["Document"].ToBsonDocument();
 
             foreach (var customAssert in customAsserts)
             {
