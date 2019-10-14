@@ -7,7 +7,7 @@ pool:
 variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
-  buildConfiguration: 'CI'
+  buildConfiguration: 'Release'
 
 steps:
 
@@ -21,4 +21,24 @@ steps:
     buildPlatform: $(buildPlatform)
     buildConfiguration: $(buildConfiguration)
     
+- task: ChocolateyCommand@0
+  inputs:
+    command: 'install'
+    installPackageId: 'mongodb.portable'
+  displayName: 'Install MongoDb and Run'
 
+- task: CmdLine@2
+  inputs:
+    script: 'mkdir "$(Build.ArtifactStagingDirectory)/BenchmarkArtifacts"'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'run'
+    projects: '**/MongoDelta.Benchmarking/*.csproj'
+    arguments: '-c Release -- -f * -a "$(Build.ArtifactStagingDirectory)/BenchmarkArtifacts"'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/BenchmarkArtifacts'
+    ArtifactName: 'Benchmark Results'
+    publishLocation: 'Container'
