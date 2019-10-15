@@ -2,7 +2,7 @@ parameters:
   solution: ''
 
 steps:
-- task: DotNetCoreInstaller@0
+- task: UseDotNet@2
   inputs:
     version: '3.0.100'
   displayName: 'Install DotNet Core'
