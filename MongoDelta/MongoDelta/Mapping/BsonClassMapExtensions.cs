@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using MongoDB.Bson.Serialization;
 
@@ -40,14 +39,27 @@ namespace MongoDelta.Mapping
         public static BsonMemberMap UpdateIncrementally(this BsonMemberMap memberMap)
         {
             ChangeConfigWithWriteLock(memberMap.ClassMap,
-                config => config.EnableIncrementalUpdateForElement(memberMap.ElementName));
+                config => config.SetUpdateStrategyForElement(memberMap.ElementName, DeltaUpdateConfiguration.MemberUpdateStrategy.Incremental));
             return memberMap;
         }
 
-        internal static bool ShouldUpdateIncrementally(this BsonClassMap classMap, string elementName)
+        /// <summary>
+        /// Updates the mapped member as if it were a hash set. The mapped member must serialize to a BsonArray. The equality is checked
+        /// on the serialized BsonValue of each item in the BsonArray
+        /// </summary>
+        /// <param name="memberMap">The member map to update as a HashSet</param>
+        /// <returns>The member map</returns>
+        public static BsonMemberMap UpdateAsHashSet(this BsonMemberMap memberMap)
+        {
+            ChangeConfigWithWriteLock(memberMap.ClassMap,
+                config => config.SetUpdateStrategyForElement(memberMap.ElementName, DeltaUpdateConfiguration.MemberUpdateStrategy.HashSet));
+            return memberMap;
+        }
+
+        internal static DeltaUpdateConfiguration.MemberUpdateStrategy GetUpdateStrategy(this BsonClassMap classMap, string elementName)
         {
             return GetConfigValueWithReadLock(classMap,
-                config => config.ElementsToIncrementallyUpdate.Contains(elementName));
+                config => config.GetUpdateStrategyForElement(elementName));
         }
 
         private static DeltaUpdateConfiguration GetDeltaUpdateConfiguration(this BsonClassMap classMap)

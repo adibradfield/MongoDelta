@@ -1,16 +1,26 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 namespace MongoDelta.Mapping
 {
     internal class DeltaUpdateConfiguration
     {
+        internal enum MemberUpdateStrategy
+        {
+            Normal,
+            Incremental,
+            HashSet
+        }
+
+        private readonly Dictionary<string, MemberUpdateStrategy> _memberUpdateStrategies = new Dictionary<string,MemberUpdateStrategy>();
+
         public bool UseDeltaUpdateStrategy { get; private set; }
 
-        private readonly HashSet<string> _incrementalUpdateElements = new HashSet<string>();
-        public IEnumerable<string> ElementsToIncrementallyUpdate => _incrementalUpdateElements.ToList().AsReadOnly();
-
         internal void EnableDeltaUpdateStrategy() => UseDeltaUpdateStrategy = true;
-        internal void EnableIncrementalUpdateForElement(string elementName) => _incrementalUpdateElements.Add(elementName);
+        internal void SetUpdateStrategyForElement(string elementName, MemberUpdateStrategy updateStrategy) => _memberUpdateStrategies[elementName] = updateStrategy;
+
+        internal MemberUpdateStrategy GetUpdateStrategyForElement(string elementName)
+        {
+            return _memberUpdateStrategies.TryGetValue(elementName, out var updateStrategy) ? updateStrategy : MemberUpdateStrategy.Normal;
+        }
     }
 }

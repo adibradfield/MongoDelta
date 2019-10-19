@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using MongoDelta.IntegrationTests.Models;
 using NUnit.Framework;
 
@@ -121,6 +122,24 @@ namespace MongoDelta.IntegrationTests
             Assert.AreEqual(updateModel.Decimal, updatedModel.Decimal);
             Assert.AreEqual(updateModel.Long, updatedModel.Long);
             Assert.AreEqual("NewName", updatedModel.Name);
+        }
+
+        [Test]
+        public async Task UpdateAsHashSet_Success()
+        {
+            var createdModel = new CollectionUpdateAggregate(){HashSet = new HashSet<string>{"Apples", "Oranges"}};
+            var createUnitOfWork =  new CollectionUnitOfWork(Database, CollectionName);
+            createUnitOfWork.Collections.Add(createdModel);
+            await createUnitOfWork.CommitAsync();
+
+            var updateUnitOfWork = new CollectionUnitOfWork(Database, CollectionName);
+            var updateModel = await updateUnitOfWork.Collections.QuerySingleAsync(m => m.Id == createdModel.Id);
+            updateModel.HashSet.Add("Pears");
+            updateModel.HashSet.Remove("Apples");
+            await updateUnitOfWork.CommitAsync();
+
+            var updatedModel = await updateUnitOfWork.Collections.QuerySingleAsync(m => m.Id == createdModel.Id);
+            CollectionAssert.AreEquivalent(new[]{"Oranges", "Pears"}, updatedModel.HashSet);
         }
 
         private async Task<CustomerAggregate> CreateExistingCustomerAggregate()

@@ -3,7 +3,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDelta.UpdateStrategies;
 
-namespace MongoDelta.ChangeTracking
+namespace MongoDelta.ChangeTracking.ElementChangeTrackers
 {
     class IncrementalElementChangeTracker : DocumentElementChangeTrackerBase
     {

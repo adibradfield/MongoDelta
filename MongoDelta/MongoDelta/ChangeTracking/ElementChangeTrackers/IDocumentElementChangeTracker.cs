@@ -1,7 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDelta.UpdateStrategies;
 
-namespace MongoDelta.ChangeTracking
+namespace MongoDelta.ChangeTracking.ElementChangeTrackers
 {
     internal interface IDocumentElementChangeTracker
     {

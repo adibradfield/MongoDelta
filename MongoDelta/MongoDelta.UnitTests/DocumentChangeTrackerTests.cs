@@ -7,7 +7,7 @@ using MongoDelta.ChangeTracking;
 using MongoDelta.UnitTests.Models;
 using NUnit.Framework;
 
-namespace MongoDelta.UnitTests.UpdateStrategies
+namespace MongoDelta.UnitTests
 {
     [TestFixture]
     public class DocumentChangeTrackerTests
@@ -253,6 +253,85 @@ namespace MongoDelta.UnitTests.UpdateStrategies
                 });
         }
 
+        [Test]
+        public void UpdateAsHashSet_SingleItemAdded_Success()
+        {
+            var expectedUpdateDefinition = new BsonDocument("$addToSet",
+                new BsonDocument("HashSet", new BsonDocument("$each", new BsonArray(new[] {"Bananas"}))));
+            var model = GetTrackedDeltaCollectionAggregate(out var trackedModel);
+
+            model.HashSet.Add("Bananas");
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel);
+        }
+
+        [Test]
+        public void UpdateAsHashSet_SingleItemRemoved_Success()
+        {
+            var expectedUpdateDefinition = new BsonDocument("$pull",
+                new BsonDocument("HashSet", new BsonDocument("$in", new BsonArray(new[] {"Apples"}))));
+            var model = GetTrackedDeltaCollectionAggregate(out var trackedModel);
+
+            model.HashSet.Remove("Apples");
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel);
+        }
+
+        [Test]
+        public void UpdateAsHashSet_TwoItemsAdded_Success()
+        {
+            var expectedUpdateDefinition = new BsonDocument("$addToSet",
+                new BsonDocument("HashSet", new BsonDocument("$each", new BsonArray(new[] {"Bananas", "Pears"}))));
+            var model = GetTrackedDeltaCollectionAggregate(out var trackedModel);
+
+            model.HashSet.Add("Bananas");
+            model.HashSet.Add("Pears");
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel, new Dictionary<string, Action<BsonValue, BsonValue>>()
+            {
+                { "$addToSet.HashSet.$each", (expectedValue, actualValue) => CollectionAssert.AreEquivalent(expectedValue.AsBsonArray, actualValue.AsBsonArray) }
+            });
+        }
+
+        [Test]
+        public void UpdateAsHashSet_TwoItemsRemoved_Success()
+        {
+            var expectedUpdateDefinition = new BsonDocument("$pull",
+                new BsonDocument("HashSet", new BsonDocument("$in", new BsonArray(new[] {"Apples", "Oranges"}))));
+            var model = GetTrackedDeltaCollectionAggregate(out var trackedModel);
+
+            model.HashSet.Remove("Apples");
+            model.HashSet.Remove("Oranges");
+
+            AssertModelEqualsExpectedDefinition(expectedUpdateDefinition, trackedModel, new Dictionary<string, Action<BsonValue, BsonValue>>()
+            {
+                { "$pull.HashSet.$in", (expectedValue, actualValue) => CollectionAssert.AreEquivalent(expectedValue.AsBsonArray, actualValue.AsBsonArray) }
+            });
+        }
+
+        [Test]
+        public void UpdateAsHashSet_DuplicateItemAddedNoChange_Success()
+        {
+            var model = GetTrackedDeltaCollectionAggregate(out var trackedModel);
+
+            model.HashSet.Add("Apples");
+
+            AssertModelEqualsExpectedDefinition(null, trackedModel);
+        }
+
+        [Test]
+        public void UpdateAsHashSet_DuplicateItemRemovedNoChange_Success()
+        {
+            var model = GetTrackedDeltaCollectionAggregate(out var trackedModel);
+
+            model.HashSet.Add("Apples");
+            model.HashSet.Remove("Apples");
+
+            AssertModelEqualsExpectedDefinition(null, trackedModel);
+        }
+
+        #region Test Helpers
+
         private static FlatAggregate GetTrackedFlatAggregate(out TrackedModel<FlatAggregate> trackedModel)
         {
             var model = new FlatAggregate()
@@ -322,11 +401,25 @@ namespace MongoDelta.UnitTests.UpdateStrategies
             return model;
         }
 
+        private static DeltaCollectionAggregate GetTrackedDeltaCollectionAggregate(
+            out TrackedModel<DeltaCollectionAggregate> trackedModel)
+        {
+            var model = new DeltaCollectionAggregate
+            {
+                HashSet = new List<string> {"Apples", "Oranges"}
+            };
+
+            var trackingCollection = new TrackedModelCollection<DeltaCollectionAggregate>();
+            trackingCollection.Existing(model);
+            trackedModel = trackingCollection.Single();
+            return model;
+        }
+
         private static void AssertModelIsReplaced(TrackedModel<FlatAggregate> trackedModel)
         {
             var changeTracker = new DocumentChangeTracker(typeof(FlatAggregate));
             var updateDefinition = changeTracker.GetUpdatesForChanges(trackedModel.OriginalDocument, trackedModel.CurrentDocument);
-            var writeModel = (ReplaceOneModel<FlatAggregate>) updateDefinition.ToMongoWriteModel(FilterDefinition<FlatAggregate>.Empty);
+            var writeModel = (ReplaceOneModel<FlatAggregate>) updateDefinition.ToMongoWriteModels(FilterDefinition<FlatAggregate>.Empty).Single();
 
             Assert.AreEqual(trackedModel.Model.Id, writeModel.Replacement.Id);
         }
@@ -341,8 +434,15 @@ namespace MongoDelta.UnitTests.UpdateStrategies
 
             var changeTracker = new DocumentChangeTracker(typeof(T));
             var updateDefinition = changeTracker.GetUpdatesForChanges(trackedModel.OriginalDocument, trackedModel.CurrentDocument);
-            var writeModel = (UpdateOneModel<T>) updateDefinition.ToMongoWriteModel(FilterDefinition<T>.Empty);
+            var writeModel = (UpdateOneModel<T>) updateDefinition.ToMongoWriteModels(FilterDefinition<T>.Empty).SingleOrDefault();
 
+            if (expectedUpdateDefinition == null)
+            {
+                Assert.IsNull(writeModel);
+                return;
+            }
+
+            Assert.IsNotNull(writeModel);
             var actualUpdateDefinition = writeModel.Update.ToBsonDocument()["Document"].ToBsonDocument();
 
             foreach (var customAssert in customAsserts)
@@ -383,5 +483,7 @@ namespace MongoDelta.UnitTests.UpdateStrategies
             if (lastExpectedDocument != null) lastExpectedDocument.Remove(lastPathPart);
             if (lastActualDocument != null) lastActualDocument.Remove(lastPathPart);
         }
+
+        #endregion
     }
 }

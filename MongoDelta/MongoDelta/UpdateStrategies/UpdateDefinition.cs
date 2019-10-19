@@ -19,22 +19,43 @@ namespace MongoDelta.UpdateStrategies
 
         private readonly bool _alwaysReplace;
         private readonly object _model;
-        private readonly Dictionary<string, ElementUpdate> _elementsToReplace = new Dictionary<string, ElementUpdate>();
-        public IReadOnlyCollection<ElementUpdate> ElementsToReplace => Array.AsReadOnly(_elementsToReplace.Values.ToArray());
 
-        private readonly Dictionary<string, ElementIncrement> _elementsToIncrement = new Dictionary<string, ElementIncrement>();
-        public IReadOnlyCollection<ElementIncrement> ElementsToIncrement => Array.AsReadOnly(_elementsToIncrement.Values.ToArray());
+        private readonly List<ElementUpdateDefinition> _elementUpdates = new List<ElementUpdateDefinition>();
 
-        public bool HasChanges => _alwaysReplace && _model != null? true : (ElementsToReplace.Any() || ElementsToIncrement.Any());
+        private IReadOnlyCollection<SetUpdateDefinition> ElementsToReplace => Array.AsReadOnly(_elementUpdates.OfType<SetUpdateDefinition>().ToArray());
+        private IReadOnlyCollection<IncrementUpdateDefinition> ElementsToIncrement => Array.AsReadOnly(_elementUpdates.OfType<IncrementUpdateDefinition>().ToArray());
+        private IReadOnlyCollection<HashSetUpdateDefinition> HashSetUpdates => Array.AsReadOnly(_elementUpdates.OfType<HashSetUpdateDefinition>().ToArray());
+
+        public bool HasChanges => _alwaysReplace && _model != null? true : _elementUpdates.Any();
 
         public void Set(string elementName, BsonValue value)
         {
-            _elementsToReplace.Add(elementName, new ElementUpdate(elementName, value));
+            if (ElementsToReplace.Any(e => e.ElementName == elementName))
+            {
+                throw new InvalidOperationException();
+            }
+
+            _elementUpdates.Add(new SetUpdateDefinition(elementName, value));
         }
 
         public void Increment(string elementName, BsonValue incrementBy)
         {
-            _elementsToIncrement.Add(elementName, new ElementIncrement(elementName, incrementBy));
+            if (ElementsToIncrement.Any(e => e.ElementName == elementName))
+            {
+                throw new InvalidOperationException();
+            }
+
+            _elementUpdates.Add(new IncrementUpdateDefinition(elementName, incrementBy));
+        }
+
+        public void UpdateHashSet(string elementName, BsonValue[] itemsToAdd, BsonValue[] itemsToRemove)
+        {
+            if (HashSetUpdates.Any(e => e.ElementName == elementName))
+            {
+                throw new InvalidOperationException();
+            }
+
+            _elementUpdates.Add(new HashSetUpdateDefinition(elementName, itemsToAdd, itemsToRemove));
         }
 
         public void Merge(string elementNamePrefix, UpdateDefinition updateDefinition)
@@ -50,6 +71,12 @@ namespace MongoDelta.UpdateStrategies
                 var newElementName = GetElementNameWithPrefix(elementNamePrefix, elementIncrement.ElementName);
                 Increment(newElementName, elementIncrement.IncrementBy);
             }
+
+            foreach (var hashSetUpdate in updateDefinition.HashSetUpdates)
+            {
+                var newElementName = GetElementNameWithPrefix(elementNamePrefix, hashSetUpdate.ElementName);
+                UpdateHashSet(newElementName, hashSetUpdate.ItemsToAdd, hashSetUpdate.ItemsToRemove);
+            }
         }
 
         private static string GetElementNameWithPrefix(string prefix, string originalName)
@@ -57,54 +84,84 @@ namespace MongoDelta.UpdateStrategies
             return prefix + "." + originalName;
         }
 
-        public WriteModel<T> ToMongoWriteModel<T>(FilterDefinition<T> filter)
+        public WriteModel<T>[] ToMongoWriteModels<T>(FilterDefinition<T> filter)
         {
             if (_alwaysReplace)
             {
-                return new ReplaceOneModel<T>(filter, (T)_model);
+                return new WriteModel<T>[]{ new ReplaceOneModel<T>(filter, (T)_model) };
             }
 
-            var replaceUpdateDefinitions =
-                new BsonDocument(ElementsToReplace.Select(e => new BsonElement(e.ElementName, e.NewValue)));
+            var operationSplitter = new MongoUpdateOperationSplitter();
 
-            var incrementUpdateDefinitions =
-                new BsonDocument(ElementsToIncrement.Select(e => new BsonElement(e.ElementName, e.IncrementBy)));
-
-            var mongoUpdateDefinition = new BsonDocument();
-            if (replaceUpdateDefinitions.Any())
+            foreach (var updateDefinition in ElementsToReplace)
             {
-                mongoUpdateDefinition.Add("$set", replaceUpdateDefinitions);
+                operationSplitter.AddOperation("$set", new BsonElement(updateDefinition.ElementName, updateDefinition.NewValue));
             }
 
-            if (incrementUpdateDefinitions.Any())
+            foreach (var updateDefinition in ElementsToIncrement)
             {
-                mongoUpdateDefinition.Add("$inc", incrementUpdateDefinitions);
+                operationSplitter.AddOperation("$inc", new BsonElement(updateDefinition.ElementName, updateDefinition.IncrementBy));
             }
 
-            return new UpdateOneModel<T>(filter, mongoUpdateDefinition);
+            foreach (var updateDefinition in HashSetUpdates)
+            {
+                if (updateDefinition.ItemsToAdd.Any())
+                {
+                    operationSplitter.AddOperation("$addToSet",
+                        new BsonElement(updateDefinition.ElementName,
+                            new BsonDocument("$each", new BsonArray(updateDefinition.ItemsToAdd))));
+                }
+
+                if (updateDefinition.ItemsToRemove.Any())
+                {
+                    operationSplitter.AddOperation("$pull",
+                        new BsonElement(updateDefinition.ElementName,
+                            new BsonDocument("$in", new BsonArray(updateDefinition.ItemsToRemove))));
+                }
+            }
+
+            return operationSplitter.GetUpdateDefinitions().Select(d => new UpdateOneModel<T>(filter, d)).ToArray<WriteModel<T>>();
         }
 
-        public class ElementUpdate
+        private abstract class ElementUpdateDefinition
         {
             public string ElementName { get; }
-            public BsonValue NewValue { get; }
 
-            public ElementUpdate(string elementName, BsonValue newValue)
+            protected ElementUpdateDefinition(string elementName)
             {
                 ElementName = elementName;
+            }
+        }
+
+        private class SetUpdateDefinition : ElementUpdateDefinition
+        {
+            public BsonValue NewValue { get; }
+
+            public SetUpdateDefinition(string elementName, BsonValue newValue):base(elementName)
+            {
                 NewValue = newValue;
             }
         }
 
-        public class ElementIncrement
+        private class IncrementUpdateDefinition : ElementUpdateDefinition
         {
-            public string ElementName { get; }
             public BsonValue IncrementBy { get; }
 
-            public ElementIncrement(string elementName, BsonValue incrementBy)
+            public IncrementUpdateDefinition(string elementName, BsonValue incrementBy):base(elementName)
             {
-                ElementName = elementName;
                 IncrementBy = incrementBy;
+            }
+        }
+
+        private class HashSetUpdateDefinition : ElementUpdateDefinition
+        {
+            public BsonValue[] ItemsToAdd { get; }
+            public BsonValue[] ItemsToRemove { get; }
+
+            public HashSetUpdateDefinition(string elementName, BsonValue[] itemsToAdd, BsonValue[] itemsToRemove):base(elementName)
+            {
+                ItemsToAdd = itemsToAdd;
+                ItemsToRemove = itemsToRemove;
             }
         }
     }

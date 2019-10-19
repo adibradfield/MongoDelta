@@ -2,6 +2,7 @@
 using System.Linq;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
+using MongoDelta.ChangeTracking.ElementChangeTrackers;
 using MongoDelta.Mapping;
 using MongoDelta.UpdateStrategies;
 

@@ -24,6 +24,23 @@
             <param name="memberMap">The map for the member to update incrementally</param>
             <returns>The member map</returns>
         </member>
+        <member name="M:MongoDelta.Mapping.BsonClassMapExtensions.UpdateAsHashSet(MongoDB.Bson.Serialization.BsonMemberMap)">
+            <summary>
+            Updates the mapped member as if it were a hash set. The mapped member must serialize to a BsonArray. The equality is checked
+            on the serialized BsonValue of each item in the BsonArray
+            </summary>
+            <param name="memberMap">The member map to update as a HashSet</param>
+            <returns>The member map</returns>
+        </member>
+        <member name="T:MongoDelta.Mapping.UpdateAsHashSetAttribute">
+            <summary>
+            Updates the mapped member as if it were a hash set. The mapped member must serialize to a BsonArray. The equality is checked
+            on the serialized BsonValue of each item in the BsonArray
+            </summary>
+        </member>
+        <member name="M:MongoDelta.Mapping.UpdateAsHashSetAttribute.Apply(MongoDB.Bson.Serialization.BsonMemberMap)">
+            <inheritdoc />
+        </member>
         <member name="T:MongoDelta.Mapping.UpdateIncrementallyAttribute">
             <summary>
             Specifies that the member should be updated incrementally. Only valid for members that serialize to the
