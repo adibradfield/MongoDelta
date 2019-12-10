@@ -39,7 +39,7 @@ namespace MongoDelta.Mapping
         public static BsonMemberMap UpdateIncrementally(this BsonMemberMap memberMap)
         {
             ChangeConfigWithWriteLock(memberMap.ClassMap,
-                config => config.SetUpdateStrategyForElement(memberMap.ElementName, DeltaUpdateConfiguration.MemberUpdateStrategy.Incremental));
+                config => config.SetUpdateStrategyForElement(memberMap.ElementName, DeltaUpdateConfiguration.MemberUpdateStrategyType.Incremental));
             return memberMap;
         }
 
@@ -52,7 +52,35 @@ namespace MongoDelta.Mapping
         public static BsonMemberMap UpdateAsHashSet(this BsonMemberMap memberMap)
         {
             ChangeConfigWithWriteLock(memberMap.ClassMap,
-                config => config.SetUpdateStrategyForElement(memberMap.ElementName, DeltaUpdateConfiguration.MemberUpdateStrategy.HashSet));
+                config => config.SetUpdateStrategyForElement(memberMap.ElementName, DeltaUpdateConfiguration.MemberUpdateStrategyType.HashSet));
+            return memberMap;
+        }
+
+        /// <summary>
+        /// Updates the mapped member as if it was another MongoDb Collection. The mapped member must serialize to a BsonArray, and the type contained within
+        /// the collection must have a mapped Id member. Items in the collection will only be updated if they have been added, removed or modified. Whether
+        /// an item is detected as modified and how it updates is determined by the update strategy set for the type contained within the collection
+        /// </summary>
+        /// <typeparam name="TCollectionItem">The type of item contained within the collection</typeparam>
+        /// <param name="memberMap">The member map to update as a delta set</param>
+        /// <returns>The member map</returns>
+        public static BsonMemberMap UpdateAsDeltaSet<TCollectionItem>(this BsonMemberMap memberMap)
+        {
+            return UpdateAsDeltaSet(memberMap, typeof(TCollectionItem));
+        }
+
+        /// <summary>
+        /// Updates the mapped member as if it was another MongoDb Collection. The mapped member must serialize to a BsonArray, and the type contained within
+        /// the collection must have a mapped Id member. Items in the collection will only be updated if they have been added, removed or modified. Whether
+        /// an item is detected as modified and how it updates is determined by the update strategy set for the type contained within the collection
+        /// </summary>
+        /// <param name="memberMap">The member map to update as a delta set</param>
+        /// <param name="collectionItemType">The type of item contained within the collection</param>
+        /// <returns>The member map</returns>
+        public static BsonMemberMap UpdateAsDeltaSet(this BsonMemberMap memberMap, Type collectionItemType)
+        {
+            ChangeConfigWithWriteLock(memberMap.ClassMap,
+                config => config.SetUpdateStrategyForElement(memberMap.ElementName, DeltaUpdateConfiguration.MemberUpdateStrategyType.DeltaSet, collectionItemType));
             return memberMap;
         }
 

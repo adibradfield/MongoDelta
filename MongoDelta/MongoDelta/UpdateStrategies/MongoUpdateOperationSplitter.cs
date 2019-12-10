@@ -8,7 +8,7 @@ namespace MongoDelta.UpdateStrategies
     {
         private readonly List<SplitUpdateOperation> _writeOperationSplit = new List<SplitUpdateOperation>();
 
-        public void AddOperation(string operation, BsonElement elementUpdateDefinition)
+        public void AddOperation(string operation, BsonElement elementUpdateDefinition, string[] arrayFilters)
         {
             var nextSplit =
                 _writeOperationSplit.FirstOrDefault(s => !s.ContainsConflictingEntryForElement(elementUpdateDefinition));
@@ -19,22 +19,25 @@ namespace MongoDelta.UpdateStrategies
                 _writeOperationSplit.Add(nextSplit);
             }
 
-            nextSplit.AddOperation(operation, elementUpdateDefinition);
+            nextSplit.AddOperation(operation, elementUpdateDefinition, arrayFilters);
         }
 
-        public BsonDocument[] GetUpdateDefinitions()
+        public SplitUpdateOperation[] GetUpdateDefinitions()
         {
-            return _writeOperationSplit.Select(s => s.ToUpdateDefinition()).ToArray();
+            return _writeOperationSplit.ToArray();
         }
 
-        private class SplitUpdateOperation : Dictionary<string, List<BsonElement>>
+        public class SplitUpdateOperation : Dictionary<string, List<BsonElement>>
         {
+            public HashSet<string> RequiredArrayFilters { get; } = new HashSet<string>();
+
             public bool ContainsConflictingEntryForElement(BsonElement element)
             {
-                return this.SelectMany(x => x.Value.Select(y => y.Name)).Contains(element.Name);
+                return this.SelectMany(x => x.Value.Select(y => y.Name))
+                    .Any(name => name == element.Name || name.StartsWith($"{element.Name}.") || element.Name.StartsWith($"{name}."));
             }
 
-            public void AddOperation(string operation, BsonElement elementUpdateDefinition)
+            public void AddOperation(string operation, BsonElement elementUpdateDefinition, string[] arrayFilters)
             {
                 if (this.TryGetValue(operation, out var updateDefinitionList))
                 {
@@ -43,6 +46,11 @@ namespace MongoDelta.UpdateStrategies
                 else
                 {
                     this.Add(operation, new List<BsonElement>{ elementUpdateDefinition });
+                }
+
+                foreach (var arrayFilter in arrayFilters)
+                {
+                    RequiredArrayFilters.Add(arrayFilter);
                 }
             }
 

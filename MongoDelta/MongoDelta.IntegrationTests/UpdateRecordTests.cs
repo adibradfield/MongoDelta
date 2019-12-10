@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MongoDelta.IntegrationTests.Models;
 using NUnit.Framework;
@@ -140,6 +142,57 @@ namespace MongoDelta.IntegrationTests
 
             var updatedModel = await updateUnitOfWork.Collections.QuerySingleAsync(m => m.Id == createdModel.Id);
             CollectionAssert.AreEquivalent(new[]{"Oranges", "Pears"}, updatedModel.HashSet);
+        }
+
+        [Test]
+        public async Task UpdateAsDeltaSet_Success()
+        {
+            var initialAddressId = Guid.NewGuid();
+            var toDeleteAddressId = Guid.NewGuid();
+
+            var createdModel = new CollectionUpdateAggregate(){DeltaSet = new List<AddressAggregate>{ 
+                new AddressAggregate
+                {
+                    Id = initialAddressId,
+                    HouseName = "Initial Address"
+                },
+                new AddressAggregate
+                {
+                    Id = toDeleteAddressId,
+                    HouseName = "Address to remove"
+                }
+            }};
+            var createUnitOfWork =  new CollectionUnitOfWork(Database, CollectionName);
+            createUnitOfWork.Collections.Add(createdModel);
+            await createUnitOfWork.CommitAsync();
+
+            var updateUnitOfWork = new CollectionUnitOfWork(Database, CollectionName);
+            var updateModel = await updateUnitOfWork.Collections.QuerySingleAsync(m => m.Id == createdModel.Id);
+
+            var addedAddressId = Guid.NewGuid();
+            updateModel.DeltaSet.Add(new AddressAggregate
+            {
+                Id = addedAddressId,
+                HouseName = "Added Address"
+            });
+            updateModel.DeltaSet.Remove(updateModel.DeltaSet.Single(x => x.Id == toDeleteAddressId));
+
+            var addressToUpdate = updateModel.DeltaSet.Single(x => x.Id == initialAddressId);
+            addressToUpdate.HouseName = "Updated address";
+
+            await updateUnitOfWork.CommitAsync();
+
+            var updatedModel = await updateUnitOfWork.Collections.QuerySingleAsync(m => m.Id == createdModel.Id);
+            Assert.AreEqual(2, updatedModel.DeltaSet.Count);
+            Assert.IsNull(updatedModel.DeltaSet.SingleOrDefault(x => x.Id == toDeleteAddressId));
+
+            var addedAddress = updatedModel.DeltaSet.SingleOrDefault(x => x.Id == addedAddressId);
+            var initialAddress = updatedModel.DeltaSet.SingleOrDefault(x => x.Id == initialAddressId);
+            Assert.IsNotNull(addedAddress);
+            Assert.IsNotNull(initialAddress);
+
+            Assert.AreEqual("Updated address", initialAddress.HouseName);
+            Assert.AreEqual("Added Address", addedAddress.HouseName);
         }
 
         private async Task<CustomerAggregate> CreateExistingCustomerAggregate()

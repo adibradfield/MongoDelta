@@ -12,6 +12,9 @@ namespace MongoDelta.IntegrationTests.Models
 
         [UpdateAsHashSet]
         public HashSet<string> HashSet { get; set; } = new HashSet<string>();
+
+        [UpdateAsDeltaSet(typeof(AddressAggregate))] 
+        public List<AddressAggregate> DeltaSet { get; set; } = new List<AddressAggregate>();
     }
 
     class CollectionUnitOfWork : UnitOfWorkBase

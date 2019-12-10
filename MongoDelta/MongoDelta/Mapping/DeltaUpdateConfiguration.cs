@@ -1,14 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace MongoDelta.Mapping
 {
     internal class DeltaUpdateConfiguration
     {
-        internal enum MemberUpdateStrategy
+        internal enum MemberUpdateStrategyType
         {
             Normal,
             Incremental,
-            HashSet
+            HashSet,
+            DeltaSet
         }
 
         private readonly Dictionary<string, MemberUpdateStrategy> _memberUpdateStrategies = new Dictionary<string,MemberUpdateStrategy>();
@@ -16,11 +18,26 @@ namespace MongoDelta.Mapping
         public bool UseDeltaUpdateStrategy { get; private set; }
 
         internal void EnableDeltaUpdateStrategy() => UseDeltaUpdateStrategy = true;
-        internal void SetUpdateStrategyForElement(string elementName, MemberUpdateStrategy updateStrategy) => _memberUpdateStrategies[elementName] = updateStrategy;
+        internal void SetUpdateStrategyForElement(string elementName, MemberUpdateStrategyType updateStrategyType, Type collectionItemType = null)
+        {
+            _memberUpdateStrategies[elementName] = new MemberUpdateStrategy(updateStrategyType, collectionItemType);
+        }
 
         internal MemberUpdateStrategy GetUpdateStrategyForElement(string elementName)
         {
-            return _memberUpdateStrategies.TryGetValue(elementName, out var updateStrategy) ? updateStrategy : MemberUpdateStrategy.Normal;
+            return _memberUpdateStrategies.TryGetValue(elementName, out var updateStrategy) ? updateStrategy : new MemberUpdateStrategy(MemberUpdateStrategyType.Normal, null);
+        }
+
+        internal class MemberUpdateStrategy
+        {
+            public MemberUpdateStrategyType Type { get; }
+            public Type CollectionItemType { get; }
+
+            public MemberUpdateStrategy(MemberUpdateStrategyType strategyType, Type collectionItemType)
+            {
+                Type = strategyType;
+                CollectionItemType = collectionItemType;
+            }
         }
     }
 }

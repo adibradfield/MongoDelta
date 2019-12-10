@@ -15,16 +15,20 @@ namespace MongoDelta.ChangeTracking
                 return new DeltaElementChangeTracker(memberMap);
             }
 
-            switch (memberMap.ClassMap.GetUpdateStrategy(memberMap.ElementName))
+            var updateStrategy = memberMap.ClassMap.GetUpdateStrategy(memberMap.ElementName);
+            switch (updateStrategy.Type)
             {
-                case DeltaUpdateConfiguration.MemberUpdateStrategy.Normal:
+                case DeltaUpdateConfiguration.MemberUpdateStrategyType.Normal:
                     return new ReplaceElementChangeTracker(memberMap);
 
-                case DeltaUpdateConfiguration.MemberUpdateStrategy.Incremental:
+                case DeltaUpdateConfiguration.MemberUpdateStrategyType.Incremental:
                     return new IncrementalElementChangeTracker(memberMap);
 
-                case DeltaUpdateConfiguration.MemberUpdateStrategy.HashSet:
+                case DeltaUpdateConfiguration.MemberUpdateStrategyType.HashSet:
                     return new HashSetChangeTracker(memberMap);
+
+                case DeltaUpdateConfiguration.MemberUpdateStrategyType.DeltaSet:
+                    return new DeltaSetChangeTracker(memberMap, updateStrategy.CollectionItemType);
 
                 default:
                     throw new ArgumentOutOfRangeException();

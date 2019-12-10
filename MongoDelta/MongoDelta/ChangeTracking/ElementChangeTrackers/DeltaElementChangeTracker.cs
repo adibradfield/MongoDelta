@@ -18,7 +18,7 @@ namespace MongoDelta.ChangeTracking.ElementChangeTrackers
             var originalDocument = originalValue.AsBsonDocument;
             var currentDocument = currentValue.AsBsonDocument;
 
-            var memberUpdateDefinition = _memberChangeTracker.GetUpdatesForChanges(originalDocument, currentDocument);
+            var memberUpdateDefinition = _memberChangeTracker.GetUpdatesForChanges(originalDocument, currentDocument, updateDefinition.ArrayFilterNamingStrategy);
             updateDefinition.Merge(MemberMap.ElementName, memberUpdateDefinition);
         }
     }
