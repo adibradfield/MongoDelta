@@ -2,6 +2,7 @@
 using System.Linq;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
+using MongoDelta.ChangeTracking.ElementChangeTrackers;
 using MongoDelta.Mapping;
 using MongoDelta.UpdateStrategies;
 
@@ -26,15 +27,17 @@ namespace MongoDelta.ChangeTracking
             }
         }
 
-        public UpdateDefinition GetUpdatesForChanges(BsonDocument original, BsonDocument current)
+        public UpdateDefinition GetUpdatesForChanges(BsonDocument original, BsonDocument current, IArrayFilterNamingStrategy arrayFilterNamingStrategy = null)
         {
+            arrayFilterNamingStrategy = arrayFilterNamingStrategy ?? new IncrementalArrayFilterNamingStrategy();
+
             if (_shouldReplace)
             {
                 var model = original != current ? BsonSerializer.Deserialize(current, _classMap.ClassType) : null;
-                return UpdateDefinition.Replace(model);
+                return UpdateDefinition.Replace(model, arrayFilterNamingStrategy);
             }
 
-            var updateDefinition = UpdateDefinition.Delta;
+            var updateDefinition = UpdateDefinition.Delta(arrayFilterNamingStrategy);
             if (original == current) return updateDefinition;
 
             foreach (var changeTracker in _changeTrackers)

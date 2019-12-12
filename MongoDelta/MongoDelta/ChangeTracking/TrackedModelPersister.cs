@@ -41,7 +41,7 @@ namespace MongoDelta.ChangeTracking
                 var updateDefinition = changeTracker.GetUpdatesForChanges(model.OriginalDocument, model.CurrentDocument);
                 if (updateDefinition.HasChanges)
                 {
-                    updateChangedModels.Add(updateDefinition.ToMongoWriteModel<T>(GenericBsonFilters.MatchSingleById(model.Model)));
+                    updateChangedModels.AddRange(updateDefinition.ToMongoWriteModels<T>(GenericBsonFilters.MatchSingleById(model.Model)));
                 }
             }
             return updateChangedModels;

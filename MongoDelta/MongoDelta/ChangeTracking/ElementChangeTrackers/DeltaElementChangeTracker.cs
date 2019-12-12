@@ -2,7 +2,7 @@
 using MongoDB.Bson.Serialization;
 using MongoDelta.UpdateStrategies;
 
-namespace MongoDelta.ChangeTracking
+namespace MongoDelta.ChangeTracking.ElementChangeTrackers
 {
     class DeltaElementChangeTracker : DocumentElementChangeTrackerBase
     {
@@ -18,7 +18,7 @@ namespace MongoDelta.ChangeTracking
             var originalDocument = originalValue.AsBsonDocument;
             var currentDocument = currentValue.AsBsonDocument;
 
-            var memberUpdateDefinition = _memberChangeTracker.GetUpdatesForChanges(originalDocument, currentDocument);
+            var memberUpdateDefinition = _memberChangeTracker.GetUpdatesForChanges(originalDocument, currentDocument, updateDefinition.ArrayFilterNamingStrategy);
             updateDefinition.Merge(MemberMap.ElementName, memberUpdateDefinition);
         }
     }
