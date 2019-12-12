@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Configurations>Debug;Release;CI</Configurations>
-    <Version>1.3.0</Version>
+    <Version>1.4.0</Version>
     <Authors>Adrian Bradfield</Authors>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <RepositoryUrl>https://github.com/adibradfield/MongoDelta/</RepositoryUrl>

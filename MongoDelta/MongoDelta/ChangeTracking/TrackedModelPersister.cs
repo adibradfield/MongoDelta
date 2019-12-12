@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using MongoDelta.MongoDbHelpers;
-using MongoDelta.UpdateStrategies;
 
 namespace MongoDelta.ChangeTracking
 {
@@ -33,10 +32,19 @@ namespace MongoDelta.ChangeTracking
 
         private IEnumerable<WriteModel<T>> UpdateChangedModels(TrackedModelCollection<T> trackedModels)
         {
-            var updatedModels = trackedModels.OfState(TrackedModelState.Existing).Where(m => m.IsDirty).ToArray();
-            var updateStrategy = UpdateStrategy.ForType<T>();
+            var existingModels = trackedModels.OfState(TrackedModelState.Existing).ToArray();
+            var changeTracker = new DocumentChangeTracker(typeof(T));
 
-            return updatedModels.Select(m => updateStrategy.GetWriteModelForUpdate(m));
+            var updateChangedModels = new List<WriteModel<T>>();
+            foreach (var model in existingModels)
+            {
+                var updateDefinition = changeTracker.GetUpdatesForChanges(model.OriginalDocument, model.CurrentDocument);
+                if (updateDefinition.HasChanges)
+                {
+                    updateChangedModels.AddRange(updateDefinition.ToMongoWriteModels<T>(GenericBsonFilters.MatchSingleById(model.Model)));
+                }
+            }
+            return updateChangedModels;
         }
 
         private async Task ExecuteWithClientSession(IMongoCollection<T> collection, IClientSessionHandle session, 

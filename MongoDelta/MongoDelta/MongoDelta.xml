@@ -24,6 +24,61 @@
             <param name="memberMap">The map for the member to update incrementally</param>
             <returns>The member map</returns>
         </member>
+        <member name="M:MongoDelta.Mapping.BsonClassMapExtensions.UpdateAsHashSet(MongoDB.Bson.Serialization.BsonMemberMap)">
+            <summary>
+            Updates the mapped member as if it were a hash set. The mapped member must serialize to a BsonArray. The equality is checked
+            on the serialized BsonValue of each item in the BsonArray
+            </summary>
+            <param name="memberMap">The member map to update as a HashSet</param>
+            <returns>The member map</returns>
+        </member>
+        <member name="M:MongoDelta.Mapping.BsonClassMapExtensions.UpdateAsDeltaSet``1(MongoDB.Bson.Serialization.BsonMemberMap)">
+            <summary>
+            Updates the mapped member as if it was another MongoDb Collection. The mapped member must serialize to a BsonArray, and the type contained within
+            the collection must have a mapped Id member. Items in the collection will only be updated if they have been added, removed or modified. Whether
+            an item is detected as modified and how it updates is determined by the update strategy set for the type contained within the collection
+            </summary>
+            <typeparam name="TCollectionItem">The type of item contained within the collection</typeparam>
+            <param name="memberMap">The member map to update as a delta set</param>
+            <returns>The member map</returns>
+        </member>
+        <member name="M:MongoDelta.Mapping.BsonClassMapExtensions.UpdateAsDeltaSet(MongoDB.Bson.Serialization.BsonMemberMap,System.Type)">
+            <summary>
+            Updates the mapped member as if it was another MongoDb Collection. The mapped member must serialize to a BsonArray, and the type contained within
+            the collection must have a mapped Id member. Items in the collection will only be updated if they have been added, removed or modified. Whether
+            an item is detected as modified and how it updates is determined by the update strategy set for the type contained within the collection
+            </summary>
+            <param name="memberMap">The member map to update as a delta set</param>
+            <param name="collectionItemType">The type of item contained within the collection</param>
+            <returns>The member map</returns>
+        </member>
+        <member name="T:MongoDelta.Mapping.UpdateAsDeltaSetAttribute">
+            <summary>
+            Updates the mapped member as if it was another MongoDb Collection. The mapped member must serialize to a BsonArray, and the type contained within
+            the collection must have a mapped Id member. Items in the collection will only be updated if they have been added, removed or modified. Whether
+            an item is detected as modified and how it updates is determined by the update strategy set for the type contained within the collection
+            </summary>
+        </member>
+        <member name="M:MongoDelta.Mapping.UpdateAsDeltaSetAttribute.#ctor(System.Type)">
+            <summary>
+            Updates the mapped member as if it was another MongoDb Collection. The mapped member must serialize to a BsonArray, and the type contained within
+            the collection must have a mapped Id member. Items in the collection will only be updated if they have been added, removed or modified. Whether
+            an item is detected as modified and how it updates is determined by the update strategy set for the type contained within the collection
+            </summary>
+            <param name="collectionItemType">The type of item contained within the collection</param>
+        </member>
+        <member name="M:MongoDelta.Mapping.UpdateAsDeltaSetAttribute.Apply(MongoDB.Bson.Serialization.BsonMemberMap)">
+            <inheritdoc />
+        </member>
+        <member name="T:MongoDelta.Mapping.UpdateAsHashSetAttribute">
+            <summary>
+            Updates the mapped member as if it were a hash set. The mapped member must serialize to a BsonArray. The equality is checked
+            on the serialized BsonValue of each item in the BsonArray
+            </summary>
+        </member>
+        <member name="M:MongoDelta.Mapping.UpdateAsHashSetAttribute.Apply(MongoDB.Bson.Serialization.BsonMemberMap)">
+            <inheritdoc />
+        </member>
         <member name="T:MongoDelta.Mapping.UpdateIncrementallyAttribute">
             <summary>
             Specifies that the member should be updated incrementally. Only valid for members that serialize to the

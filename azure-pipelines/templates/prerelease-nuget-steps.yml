@@ -9,7 +9,7 @@ steps:
     configuration: '${{ parameters.buildConfiguration }}'
     versioningScheme: 'byPrereleaseNumber'
     majorVersion: '1'
-    minorVersion: '3'
+    minorVersion: '4'
     patchVersion: '0'
   displayName: 'Create NuGet Package'
 
@@ -18,5 +18,5 @@ steps:
     command: 'push'
     packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
     nuGetFeedType: 'internal'
-    publishVstsFeed: '9b2a4370-b342-4277-b881-051a0c90056c'
+    publishVstsFeed: 'df1cab1e-21bf-4a8e-a335-29d7a5b730ab/ebdc565b-a6c5-4e3b-b9e7-f666a31340ec'
   displayName: 'Push NuGet Package'

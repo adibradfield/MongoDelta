@@ -133,7 +133,9 @@ namespace MongoDelta
 
         internal override PreparedWriteModel PrepareChangesForWrite()
         {
-            return new PreparedWriteModel<T>(_trackedModelPersister.GetChangesForWrite(_trackedModels));
+            var preparedWriteModel = new PreparedWriteModel<T>(_trackedModelPersister.GetChangesForWrite(_trackedModels));
+            preparedWriteModel.ThrowIfNotValid();
+            return preparedWriteModel;
         }
     }
 }
